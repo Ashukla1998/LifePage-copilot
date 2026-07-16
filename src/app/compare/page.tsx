@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-// 🔹 Define explicit interfaces for your API response structures
 interface Question {
   question: string;
   que_category: 'Skills' | 'Education' | string;
@@ -27,10 +27,13 @@ interface UserEventBody {
   number_none_click?: number;
 }
 
-export default function CareerDiscover() {
+function CompareCareersContent() {
+  const searchParams = useSearchParams();
+  const term = searchParams.get('career') || '';
+
   const [leftCareer, setLeftCareer] = useState<CareerData | null>(null);
   const [rightCareer, setRightCareer] = useState<CareerData | null>(null);
-  const [selectedSide, setSelectedSide] = useState<'left' | 'right'>('left'); // Default matching left-selected
+  const [selectedSide, setSelectedSide] = useState<'left' | 'right'>('left');
   
   const [leftClickCount, setLeftClickCount] = useState<number>(0);
   const [rightClickCount, setRightClickCount] = useState<number>(0);
@@ -39,22 +42,47 @@ export default function CareerDiscover() {
   const lastSelected = useRef<'left' | 'right' | null>(null);
   const usedQuestionsMap = useRef<Record<string, Set<string>>>({});
 
-  // 🔹 INIT DATA FETCH
+  // 🔹 INIT DATA FETCH BASED ON URL "?career=..."
   useEffect(() => {
     async function init() {
+      if (!term) return;
       try {
+        // 1. Fetch search career for the left side
+        const LeftResult = await fetch('https://www.lifepage.in/n/api/compare', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name: term })
+        });
+        const LeftData = await LeftResult.json();
+
+        if (!LeftData.success || !LeftData.data) {
+          console.error("Career not found in API search.");
+          return;
+        }
+
+        // 2. Fetch alternative list for right side comparison
         const res = await fetch('https://www.lifepage.in/n/api/getUserQuestions', {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' },
         });
         const data = await res.json();
 
-        if (!data.success || !data.data || data.data.length < 2) {
+        if (!data.success || !data.data || data.data.length === 0) {
           return;
         }
 
-        const initialLeft: CareerData = data.data[0];
-        const initialRight: CareerData = data.data[1];
+        const initialLeft: CareerData = LeftData.data;
+
+        // Find a comparison career different from the searched Left side career
+        const availableCareers = data.data.filter(
+          (item: CareerData) => item.session.sessionid !== initialLeft.session.sessionid
+        );
+
+        if (availableCareers.length === 0) {
+          return;
+        }
+
+        const initialRight: CareerData = availableCareers[0];
 
         setLeftCareer(initialLeft);
         setRightCareer(initialRight);
@@ -68,13 +96,13 @@ export default function CareerDiscover() {
       }
     }
     init();
-  }, []);
+  }, [term]);
 
-  // 🔹 SAFE TRACKING FUNCTION
+  // 🔹 EVENT TRACKING
   const trackClick = (type: 'explore' | 'none') => {
     const userid = typeof window !== 'undefined' ? sessionStorage.getItem("lp_userid") : null;
     if (!userid) {
-      console.warn("Tracking event omitted: 'lp_userid' missing from sessionStorage.");
+      console.warn("Tracking skipped: 'lp_userid' missing from sessionStorage.");
       return;
     }
 
@@ -92,7 +120,7 @@ export default function CareerDiscover() {
     }).catch(err => console.error("Tracking error:", err));
   };
 
-  // 🔹 FIND NEXT RELEVANT CAREER
+  // 🔹 GET NEXT RELEVANT CAREER
   const getNextCareer = async (baseCareer: CareerData): Promise<CareerData | null> => {
     const sessionId = baseCareer.session.sessionid;
     if (!usedQuestionsMap.current[sessionId]) {
@@ -159,7 +187,7 @@ export default function CareerDiscover() {
     return null;
   };
 
-  // 🔹 CARD SELECTION LOGIC
+  // 🔹 CLICK INTERACTION HANDLERS
   const selectLeft = async () => {
     if (!leftCareer) return;
     const nextCount = leftClickCount + 1;
@@ -209,10 +237,10 @@ export default function CareerDiscover() {
   };
 
   const openCareer = (topic: string) => {
-    window.location.href = `/ailist?career=${encodeURIComponent(topic)}`;
+    window.location.href = `/advisor-list?career=${encodeURIComponent(topic)}`;
   };
 
-  // 🔹 NONE OF THE ABOVE BUTTON
+  // 🔹 SKIP NEXT / NONE OF THE ABOVE BUTTON
   const nextCareer = async () => {
     setLeftClickCount(0);
     setRightClickCount(0);
@@ -256,7 +284,7 @@ export default function CareerDiscover() {
     }
   };
 
-  // 🔹 PROGRESS BAR SUBCOMPONENT (With tight, clean padding)
+  // 🔹 PROGRESS HUD COMPONENT
   const RenderLearnMore = ({ count, career }: { count: number; career: CareerData | null }) => {
     if (count === 0 || !career) return null;
     const progress = count * 20;
@@ -290,7 +318,7 @@ export default function CareerDiscover() {
   };
 
   const renderCardContent = (career: CareerData | null, isSelected: boolean) => {
-    if (!career) return <p className="text-white py-10">Loading career data...</p>;
+    if (!career) return <p className="text-white py-10 font-medium">Finding matching comparison...</p>;
     const { session, questions } = career;
     const skills = questions.filter(q => q.que_category === 'Skills');
     const education = questions.filter(q => q.que_category === 'Education');
@@ -301,7 +329,7 @@ export default function CareerDiscover() {
 
     return (
       <div className="relative flex flex-col group/card">
-        {/* Tick Indicator Container */}
+        {/* Hover/Selection Tick Icon Overlay */}
         <div 
           className={`absolute top-[6%] left-[92%] -translate-x-1/2 -translate-y-1/2 w-[46px] h-[44px] bg-[url('https://www.lifepage.in/support/tick.png')] bg-no-repeat bg-center bg-contain transition-all duration-300 ease-in-out pointer-events-none z-[10]
             ${isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-75 group-hover/card:opacity-100 group-hover/card:scale-100 md:group-hover/parent:opacity-0'}`}
@@ -310,13 +338,14 @@ export default function CareerDiscover() {
         <div className="bg-[#e46c09] m-0 rounded-lg overflow-hidden shadow-md">
           <div className="cardtext">
             <div className="relative">
-              <div className="text-[110%] text-center px-[6px] pb-[6px] pt-2 text-white font-semibold text-[140%]">
+              <div className="text-center px-[6px] pb-[6px] pt-2 text-white font-semibold text-[140%]">
                 {session.topic}
               </div>
               <img src={img} alt={session.topic} className="w-full h-auto block rounded-[6px]" />
               
+              {/* Category Tags Container */}
               <div className="absolute inset-0 pointer-events-none">
-                {/* Skills Box */}
+                {/* Skills Overlay Box */}
                 <div className="absolute top-[45px] right-[10px] bg-black/90 text-white p-2 rounded-[2px] text-[12px] max-w-[45%] z-[2] max-[768px]:text-[10px] max-[768px]:max-w-[60%] max-[768px]:right-[5px] max-[480px]:text-[9px] max-[480px]:p-[5px]">
                   <div className="text-[110%] font-bold">Skills</div>
                   <div className="text-[90%] leading-tight text-gray-300">
@@ -324,7 +353,7 @@ export default function CareerDiscover() {
                   </div>
                 </div>
 
-                {/* Education Box */}
+                {/* Education Overlay Box */}
                 <div className="absolute top-[45px] left-[10px] bg-black/90 text-white p-2 rounded-[2px] text-[12px] max-w-[45%] z-[2] max-[768px]:text-[10px] max-[768px]:max-w-[60%] max-[768px]:left-[5px] max-[480px]:text-[9px] max-[480px]:p-[5px]">
                   <div className="text-[110%] font-bold">Education</div>
                   <div className="text-[90%] leading-tight text-gray-300">
@@ -340,41 +369,42 @@ export default function CareerDiscover() {
   };
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center p-[15px] sm:p-5 md:p-8 bg-gray-50 box-border">
+    <div className="min-h-screen w-full flex items-center justify-center p-[10px] sm:p-5 md:p-8 bg-gray-50 box-border">
       
       <div className="max-w-[1170px] w-full my-0 mx-auto p-5 text-center bg-[#ffc000] border-2 border-black rounded-lg box-border">
-        <h2 className="text-2xl font-bold mb-5 text-gray-900 max-[768px]:text-[18px] mb-[20px]">
+        
+        <h2 className="text-2xl font-bold text-gray-900 max-[768px]:text-[18px] mb-[20px]">
           Which Career do you prefer?
         </h2>
 
-        {/* Change items-stretch to items-start to prevent blank vertical empty space stretching */}
         <div className="flex gap-[30px] justify-center items-start group/parent max-[1024px]:gap-5 max-[768px]:flex-col max-[768px]:px-[10px]">
-          {/* LEFT COLUMN */}
+          
+          {/* SEARCH TARGET CAREER (LEFT CARD) */}
           <div 
             className="flex-1 max-w-[450px] cursor-pointer max-[1024px]:max-w-full"
             onClick={selectLeft}
           >
             {renderCardContent(leftCareer, selectedSide === 'left')}
-            {/* Rendered only on active selection */}
             {selectedSide === 'left' && <RenderLearnMore count={leftClickCount} career={leftCareer} />}
           </div>
 
-          {/* VS DIVISION */}
+          {/* VS CONTAINER */}
           <div className="flex items-center justify-center self-center py-4">
             <img src="/vs.png" alt="VS" className="w-[80px] h-auto" />
           </div>
 
-          {/* RIGHT COLUMN */}
+          {/* COMPARATIVE CAREER (RIGHT CARD) */}
           <div 
             className="flex-1 max-w-[450px] cursor-pointer max-[1024px]:max-w-full"
             onClick={selectRight}
           >
             {renderCardContent(rightCareer, selectedSide === 'right')}
-            {/* Rendered only on active selection */}
             {selectedSide === 'right' && <RenderLearnMore count={rightClickCount} career={rightCareer} />}
           </div>
+
         </div>
 
+        {/* Action button */}
         <div className="mt-[25px]">
           <button 
             className="bg-[#363636] text-white font-bold py-3 px-6 rounded-[3px] border-none cursor-pointer shadow-[0_6px_10px_rgba(0,0,0,0.25)] transition hover:bg-gray-800 max-[480px]:w-full"
@@ -383,8 +413,17 @@ export default function CareerDiscover() {
             None of the Above
           </button>
         </div>
-      </div>
 
+      </div>
     </div>
+  );
+}
+
+// 🔹 Suspense Boundary wrapper for parameter parsing safety during static page optimizations
+export default function CompareCareers() {
+  return (
+    <Suspense fallback={<div className="flex justify-center items-center min-h-screen font-sans">Preparing comparisons...</div>}>
+      <CompareCareersContent />
+    </Suspense>
   );
 }
