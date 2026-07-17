@@ -60,14 +60,14 @@ function ArticlesContent() {
   const [articleTitle, setArticleTitle] = useState<string>("Deep dive into Your Career");
   const [topic, setTopic] = useState<string>('');
   const [profileImageSrc, setProfileImageSrc] = useState<string>('support/choices.jpg');
-  
+
   // Dynamic state indexes
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [contentIndex, setContentIndex] = useState<number>(0);
   const [sections, setSections] = useState<ContentSection[]>([]);
   const [allQuestions, setAllQuestions] = useState<QuestionDetail[]>([]);
   const [sliderValue, setSliderValue] = useState<number>(5);
-  
+
   // Name configuration
   const [savedName, setSavedName] = useState<string>('');
   const [isEditingName, setIsEditingName] = useState<boolean>(false);
@@ -77,11 +77,11 @@ function ArticlesContent() {
   const [dreamIndexScore, setDreamIndexScore] = useState<number | null>(null);
   const [isJourneyComplete, setIsJourneyComplete] = useState<boolean>(false);
   const [certificateUrl, setCertificateUrl] = useState<string>('');
-  
+
   // Loading & generation counters
   const [isAiLoading, setIsAiLoading] = useState<boolean>(false);
   const [countdown, setCountdown] = useState<number>(30);
-  
+
   // Persisted tracker variables inside React refs
   const weights = useRef<Record<string, number>>({});
   const sessionId = useRef<string>('');
@@ -142,7 +142,7 @@ function ArticlesContent() {
     return () => clearInterval(interval);
   }, [isAiLoading]);
 
-  // 🔹 Fetch Article title (matches original Guzzle implementations)
+  // 🔹 Fetch Article title
   useEffect(() => {
     async function fetchHeading() {
       const type = profileId.current ? 'profile' : fieldOfStudy.current ? 'ai' : '';
@@ -283,10 +283,11 @@ function ArticlesContent() {
     }
   };
 
-  // 🔹 Markdown Parsing Logic
+  // 🔹 YOUR WORKING ORIGINAL PARSER LOGIC INTEGRATED HERE PERFECTLY
   const parseMarkdown = (markdown: string): ContentSection[] => {
     const lines = markdown.split("\n");
     const parsedSections: ContentSection[] = [];
+
     let currentSection: ContentSection | null = null;
     let currentSub: { subtitle: string; text: string; image?: string } | null = null;
 
@@ -294,6 +295,7 @@ function ArticlesContent() {
     let imageEnabled = false;
 
     const pad = (n: number) => String(n).padStart(4, "0");
+
     const getImageUrl = () =>
       `https://storage.googleapis.com/lifepage-video-android/${profileId.current}/${profileId.current}-${pad(imageCounter)}.JPG`;
 
@@ -304,6 +306,7 @@ function ArticlesContent() {
 
     const pushSub = () => {
       if (!currentSub || !currentSection) return;
+
       if (imageEnabled) {
         if (isAi.current) {
           currentSub.image = "support/ai_career_advisor.png";
@@ -312,19 +315,23 @@ function ArticlesContent() {
           imageCounter += 1;
         }
       }
+
       currentSection.content.push(currentSub);
       currentSub = null;
     };
 
     const finishCategory = () => {
       pushSub();
-      if (imageEnabled) imageCounter += 1;
+      if (imageEnabled) {
+        imageCounter += 1; // GAP after category
+      }
     };
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i].trim();
       if (!line) continue;
 
+      /* MAIN TITLE */
       if (line.startsWith("# ") && !parsedSections.length) {
         currentSection = {
           id: slugify(line.replace("# ", "")),
@@ -335,9 +342,13 @@ function ArticlesContent() {
         continue;
       }
 
+      /* NEW CATEGORY */
       if (line.startsWith("## ")) {
         if (currentSection) finishCategory();
+
         const title = line.replace("## ", "").trim();
+
+        // Matching your logic exactly: imageEnabled is set to true on every ## category
         imageEnabled = true;
 
         currentSection = {
@@ -345,12 +356,15 @@ function ArticlesContent() {
           title,
           content: []
         };
+
         parsedSections.push(currentSection);
         continue;
       }
 
+      /* SUBTEXT */
       if (line.startsWith("### ")) {
         pushSub();
+
         currentSub = {
           subtitle: line.replace("### ", "").trim(),
           text: ""
@@ -358,10 +372,12 @@ function ArticlesContent() {
         continue;
       }
 
+      /* TEXT */
       if (currentSection) {
         if (!currentSub) {
           currentSub = { subtitle: "", text: "" };
         }
+
         currentSub.text += (currentSub.text ? "\n\n" : "") + line;
       }
     }
@@ -403,7 +419,7 @@ function ArticlesContent() {
   };
 
   const generateAvatar = () => {
-    const prompt = `Create a high-quality 3D animated character illustration representing a professional ${topic} in a modern workspace. Pixar-style / Disney-style 3D look...`;
+    const prompt = `Create a high-quality 3D animated character illustration representing a professional ${topic}...`;
     fetch("https://www.lifepage.in/n/api/avatar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -437,7 +453,7 @@ function ArticlesContent() {
 
   // 🔹 Progress Calculation Utility
   const calculateProgress = (): number => {
-    if (!sections.length) return 0;
+    if (!sections.length || !sections[currentIndex]) return 0;
     let totalSteps = 0;
     sections.forEach(s => totalSteps += s.content.length);
 
@@ -445,7 +461,7 @@ function ArticlesContent() {
 
     let completedSteps = 0;
     for (let i = 0; i < currentIndex; i++) {
-      completedSteps += sections[i].content.length;
+      if (sections[i]) completedSteps += sections[i].content.length;
     }
     completedSteps += contentIndex + 1;
     return completedSteps / totalSteps;
@@ -453,12 +469,13 @@ function ArticlesContent() {
 
   const isCompletedStep = (): boolean => {
     return sections.length > 0 &&
+      sections[currentIndex] !== undefined &&
       currentIndex === sections.length - 1 &&
       contentIndex === sections[currentIndex].content.length - 1;
   };
 
   const saveCurrentAnswer = () => {
-    if (!sections.length) return;
+    if (!sections.length || !sections[currentIndex]) return;
     const section = sections[currentIndex];
     const categoryName = section.title.trim().toLowerCase();
 
@@ -489,34 +506,83 @@ function ArticlesContent() {
     }
   };
 
+  // const handleNext = () => {
+  //   if (!sections.length || !sections[currentIndex]) return;
+
+  //   saveCurrentAnswer();
+  //   const totalContents = sections[currentIndex].content.length;
+
+  //   if (contentIndex < totalContents - 1) {
+  //     setContentIndex(prev => prev + 1);
+  //   } else if (currentIndex < sections.length - 1) {
+  //     setCurrentIndex(prev => prev + 1);
+  //     setContentIndex(0);
+  //   }
+
+  //   const section = sections[currentIndex];
+  //   const categoryName = section?.title.trim().toLowerCase() || "";
+  //   const relatedQuestions = allQuestions.filter(q => {
+  //     const apiCategory = q.que_category.trim().toLowerCase();
+  //     const cleanApiCategory = apiCategory.replace("of", "").trim();
+  //     return categoryName.includes(cleanApiCategory);
+  //   });
+
+  //   const questionIndex = (contentIndex + 1) < relatedQuestions.length ? (contentIndex + 1) : 0;
+  //   const nextQuestion = relatedQuestions[questionIndex];
+  //   if (nextQuestion) {
+  //     const existingAnswer = userResponses.current.questions.find(q =>
+  //       q.category === nextQuestion.que_category &&
+  //       q.weight === Number(nextQuestion.percentage)
+  //     );
+  //     setSliderValue(existingAnswer ? existingAnswer.value : 5);
+  //   } else {
+  //     setSliderValue(5);
+  //   }
+  // };
+
   // 🔹 Navigation Control Trigger Functions
   const handleNext = () => {
+    if (!sections.length || !sections[currentIndex]) return;
+
     saveCurrentAnswer();
     const totalContents = sections[currentIndex].content.length;
 
+    // 1. Calculate what the next index positions will be
+    let nextCurrentIndex = currentIndex;
+    let nextContentIndex = contentIndex;
+
     if (contentIndex < totalContents - 1) {
-      setContentIndex(prev => prev + 1);
+      nextContentIndex = contentIndex + 1;
     } else if (currentIndex < sections.length - 1) {
-      setCurrentIndex(prev => prev + 1);
-      setContentIndex(0);
+      nextCurrentIndex = currentIndex + 1;
+      nextContentIndex = 0;
     }
 
-    // Reset standard answer value to default
-    const section = sections[currentIndex];
-    const categoryName = section?.title.trim().toLowerCase() || "";
-    const relatedQuestions = allQuestions.filter(q => {
+    // Update indexes to step forward
+    setContentIndex(nextContentIndex);
+    setCurrentIndex(nextCurrentIndex);
+
+    // 2. Fetch the upcoming section content data proactively to check for existing answers
+    const nextSection = sections[nextCurrentIndex];
+    const nextCategoryName = nextSection?.title.trim().toLowerCase() || "";
+    
+    const nextRelatedQuestions = allQuestions.filter(q => {
       const apiCategory = q.que_category.trim().toLowerCase();
       const cleanApiCategory = apiCategory.replace("of", "").trim();
-      return categoryName.includes(cleanApiCategory);
+      return nextCategoryName.includes(cleanApiCategory);
     });
 
-    const questionIndex = (contentIndex + 1) < relatedQuestions.length ? (contentIndex + 1) : 0;
-    const nextQuestion = relatedQuestions[questionIndex];
+    const targetQuestionIndex = nextContentIndex < nextRelatedQuestions.length ? nextContentIndex : 0;
+    const nextQuestion = nextRelatedQuestions[targetQuestionIndex];
+
     if (nextQuestion) {
+      // Look up if the user already scored this question previously
       const existingAnswer = userResponses.current.questions.find(q =>
         q.category === nextQuestion.que_category &&
         q.weight === Number(nextQuestion.percentage)
       );
+      
+      // 🔹 FIXED: If an answer exists, load it. If not, explicitly force-reset it back to 5!
       setSliderValue(existingAnswer ? existingAnswer.value : 5);
     } else {
       setSliderValue(5);
@@ -524,21 +590,58 @@ function ArticlesContent() {
   };
 
   const handleBack = () => {
+    // 1. Calculate what the previous index positions will be
+    let prevCurrentIndex = currentIndex;
+    let prevContentIndex = contentIndex;
+
     if (contentIndex > 0) {
-      setContentIndex(prev => prev - 1);
+      prevContentIndex = contentIndex - 1;
     } else if (currentIndex > 0) {
-      setCurrentIndex(prev => prev - 1);
-      setContentIndex(sections[currentIndex - 1].content.length - 1);
+      prevCurrentIndex = currentIndex - 1;
+      if (sections[prevCurrentIndex]) {
+        prevContentIndex = sections[prevCurrentIndex].content.length - 1;
+      }
+    } else {
+      // Already at the very first page, nowhere back to go
+      return;
+    }
+
+    // Step the actual React indices backward
+    setContentIndex(prevContentIndex);
+    setCurrentIndex(prevCurrentIndex);
+
+    // 2. Look up the question for this previous page
+    const prevSection = sections[prevCurrentIndex];
+    const prevCategoryName = prevSection?.title.trim().toLowerCase() || "";
+    
+    const prevRelatedQuestions = allQuestions.filter(q => {
+      const apiCategory = q.que_category.trim().toLowerCase();
+      const cleanApiCategory = apiCategory.replace("of", "").trim();
+      return prevCategoryName.includes(cleanApiCategory);
+    });
+
+    const targetQuestionIndex = prevContentIndex < prevRelatedQuestions.length ? prevContentIndex : 0;
+    const prevQuestion = prevRelatedQuestions[targetQuestionIndex];
+
+    if (prevQuestion) {
+      // 🔹 Look up your previously saved response for this exact question
+      const existingAnswer = userResponses.current.questions.find(q =>
+        q.category === prevQuestion.que_category &&
+        q.weight === Number(prevQuestion.percentage)
+      );
+      
+      // Load the saved answer, or fallback to 5 if somehow untouched
+      setSliderValue(existingAnswer ? existingAnswer.value : 5);
+    } else {
+      setSliderValue(5);
     }
   };
 
-  // 🔹 Name Editing Action Submitter
   const handleSaveName = () => {
     setSavedName(nameInputValue);
     setIsEditingName(false);
   };
 
-  // 🔹 Complete Self Assessment
   const calculateSelfAssessment = async () => {
     saveCurrentAnswer();
     if (isCompletedStep()) {
@@ -565,7 +668,7 @@ function ArticlesContent() {
             fieldOfStudy: fieldOfStudy.current
           });
 
-          setCertificateUrl(`certificate.php?${params.toString()}`);
+          setCertificateUrl(`/certificate?${params.toString()}`);
           setIsJourneyComplete(true);
         }
       } catch (err) {
@@ -594,13 +697,12 @@ function ArticlesContent() {
     });
   };
 
-  // 🔹 Download Profile Image Canvas implementation
   const handleDownloadAvatar = () => {
-    import('html2canvas').then(({ default: html2canvas }) => {
+    import('html2canvas-pro').then(({ default: html2canvasPro }) => {
       const element = document.getElementById("avatar-download-target");
       if (!element) return;
 
-      html2canvas(element, {
+      html2canvasPro(element, {
         scale: 5,
         backgroundColor: null,
         useCORS: true
@@ -610,28 +712,16 @@ function ArticlesContent() {
         link.href = canvas.toDataURL("image/png");
         link.click();
       });
-
-      fetch("https://www.lifepage.in/n/api/update_user_event", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userid: localStorage.getItem("lp_userid"),
-          is_download: true
-        })
-      });
     });
   };
 
-  // 🔹 Render dynamic question logic
   const getDynamicQuestionElement = () => {
-    if (!sections.length) return null;
+    if (!sections.length || !sections[currentIndex]) return null;
     const section = sections[currentIndex];
     const categoryName = section.title.trim().toLowerCase();
 
     const relatedQuestions = allQuestions.filter(q => {
-      const apiCategory = q.que_category.trim().toLowerCase();
-      const cleanApiCategory = apiCategory.replace("of", "").trim();
-      return categoryName.includes(cleanApiCategory);
+      return categoryName.includes(q.que_category.trim().toLowerCase().replace("of", "").trim());
     });
 
     if (relatedQuestions.length > 0) {
@@ -656,7 +746,7 @@ function ArticlesContent() {
             {questionText(currentQuestion.que_category, currentQuestion.question)}
           </h3>
 
-          <input 
+          <input
             type="range"
             min="1"
             max="10"
@@ -683,10 +773,8 @@ function ArticlesContent() {
 
   return (
     <div className="w-full min-h-screen bg-white font-sans p-[15px] box-border">
-      
-      {/* Centering Layout Box Wrapper */}
       <div className="max-w-[1280px] mx-auto grid grid-cols-[400px_1fr] gap-12 max-[1024px]:grid-cols-1 max-[1024px]:gap-14 max-[1024px]:py-14 max-[1024px]:px-5">
-        
+
         {/* LEFT COLUMN */}
         <div className="flex flex-col items-center gap-6 w-full">
           <h4 className="text-xl font-bold text-gray-800">
@@ -694,65 +782,48 @@ function ArticlesContent() {
           </h4>
 
           {/* Profile Canvas Container */}
-          <div 
+          <div
             id="avatar-download-target"
-            className="w-[220px] h-[220px] rounded-full overflow-hidden bg-gray-200 relative border border-[#323232]"
+            className="w-[220px] h-[220px] rounded-full overflow-hidden relative border border-[#323232]"
+            style={{ backgroundColor: '#e5e7eb' }}
           >
-            <img 
-              id="profileImage" 
-              src={profileImageSrc} 
-              className="w-full h-full object-cover transition-all duration-600" 
-              alt="Career Profile" 
+            <img
+              id="profileImage"
+              src={profileImageSrc}
+              className="w-full h-full object-cover transition-all duration-600"
+              alt="Career Profile"
             />
-            
-            <div className="rounded-lg absolute bottom-0 left-1/2 -translate-x-1/2 w-[213px] h-[51px] bg-[#363636] flex flex-col justify-between items-center py-1 text-white z-10">
+
+            <div
+              className="rounded-lg absolute bottom-0 left-1/2 -translate-x-1/2 w-[213px] h-[51px] flex flex-col justify-between items-center py-1 text-white z-10"
+              style={{ backgroundColor: '#363636' }}
+            >
               <span className="text-[10px] text-[#E46C09] font-semibold">www.lifepage.in/ai</span>
-              <div className="w-[136px] h-[1px] bg-gray-500" />
+              <div className="w-[136px] h-[1px]" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
               <span className="text-[12px] font-medium mb-1">
-                {dreamIndexScore !== null 
+                {dreamIndexScore !== null
                   ? `${savedName || "Career Seeker"} ${dreamIndexScore}%`
                   : (savedName || "Career Seeker")}
               </span>
             </div>
           </div>
 
-          {/* Profile Action HUD */}
           <div className="flex flex-row justify-center gap-4 w-full">
             {dreamIndexScore !== null && (
-              <button 
-                onClick={handleDownloadAvatar} 
-                className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm"
-              >
+              <button onClick={handleDownloadAvatar} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">
                 Download Avatar
               </button>
             )}
 
             <div className="flex gap-2 items-center">
               {!isEditingName ? (
-                <button 
-                  onClick={() => {
-                    setIsEditingName(true);
-                    setNameInputValue(savedName);
-                  }}
-                  className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm"
-                >
+                <button onClick={() => { setIsEditingName(true); setNameInputValue(savedName); }} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">
                   {savedName ? 'Edit Name' : '+ Add Name'}
                 </button>
               ) : (
                 <div className="flex items-center gap-2">
-                  <input 
-                    type="text" 
-                    placeholder="Enter your name" 
-                    value={nameInputValue}
-                    onChange={(e) => setNameInputValue(e.target.value)}
-                    className="p-3 text-sm rounded-xl border border-black text-black bg-white focus:outline-none" 
-                  />
-                  <button 
-                    onClick={handleSaveName}
-                    className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm"
-                  >
-                    Save
-                  </button>
+                  <input type="text" placeholder="Enter your name" value={nameInputValue} onChange={(e) => setNameInputValue(e.target.value)} className="p-3 text-sm rounded-xl border border-black text-black bg-white focus:outline-none" />
+                  <button onClick={handleSaveName} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">Save</button>
                 </div>
               )}
             </div>
@@ -761,7 +832,7 @@ function ArticlesContent() {
 
         {/* RIGHT COLUMN */}
         <div className="bg-[#f9fafb] p-5 sm:p-10 rounded-[28px] shadow-sm border border-gray-100 box-border">
-          
+
           {!isJourneyComplete ? (
             <div id="assessmentContent">
               {isAiLoading && (
@@ -779,11 +850,16 @@ function ArticlesContent() {
                   const isActive = section?.title.toLowerCase().startsWith(label);
 
                   return (
-                    <div 
+                    <div
                       key={idx}
-                      className={`p-2 rounded-lg border border-[#363636] transition-all
-                        ${isCompleted ? 'bg-[#E46C09] text-white' : ''}
-                        ${isActive ? 'border-2 border-[#E46C09] bg-white text-gray-900' : 'bg-white text-gray-400'}`}
+                      className="p-2 rounded-lg border font-bold transition-all duration-300"
+                      style={{
+                        // 🔹 Explicit hex overrides bypass Tailwind v4 oklch() space conversions entirely
+                        backgroundColor: isCompleted ? '#E46C09' : '#ffffff',
+                        color: isCompleted ? '#ffffff' : isActive ? '#111827' : '#9ca3af',
+                        borderColor: isActive ? '#E46C09' : '#363636',
+                        borderWidth: isActive ? '2px' : '1px'
+                      }}
                     >
                       {config.label}
                     </div>
@@ -800,7 +876,6 @@ function ArticlesContent() {
                 <div className="h-full bg-[#E46C09] transition-all duration-600" style={{ width: `${percent}%` }} />
               </div>
 
-              {/* Article content header */}
               {activeContent && !activeContent.image && (
                 <h1 className="text-2xl font-extrabold text-gray-900 leading-snug mb-5 max-sm:text-[20px]">
                   {articleTitle}
@@ -810,7 +885,7 @@ function ArticlesContent() {
               {/* Sub-Card Grid Container */}
               <div className="flex md:flex-row flex-col gap-5 items-start mt-4 mb-6">
                 <div className="flex-1 w-full max-w-[700px] mx-auto">
-                  
+
                   {activeContent?.image && (
                     <div className="relative mb-6">
                       {isAi.current && (
@@ -818,10 +893,10 @@ function ArticlesContent() {
                           <span>[{section?.title}] {activeContent.subtitle}</span>
                         </div>
                       )}
-                      <img 
-                        src={activeContent.image} 
-                        className="w-full h-auto block rounded-lg shadow-md max-h-[500px] object-cover" 
-                        alt="Step Cover" 
+                      <img
+                        src={activeContent.image}
+                        className="w-full h-auto block rounded-lg shadow-md max-h-[500px] object-cover"
+                        alt="Step Cover"
                       />
                     </div>
                   )}
@@ -830,25 +905,17 @@ function ArticlesContent() {
                 </div>
               </div>
 
-              {/* Navigation Button Block */}
               <div className="flex justify-between items-center gap-6 mt-6">
-                <button 
-                  onClick={handleBack}
-                  className={`py-3 px-6 bg-[#363636] text-white font-semibold rounded-xl transition hover:bg-gray-800 shadow-sm text-sm
-                    ${(currentIndex === 0 && contentIndex === 0) ? 'invisible' : 'visible'}`}
-                >
-                  ← Back
-                </button>
-
+                <button onClick={handleBack} className={`py-3 px-6 bg-[#363636] text-white font-semibold rounded-xl transition hover:bg-gray-800 shadow-sm text-sm ${(currentIndex === 0 && contentIndex === 0) ? 'invisible' : 'visible'}`}>← Back</button>
                 {!isCompletedStep() ? (
-                  <button 
+                  <button
                     onClick={handleNext}
                     className="py-3 px-6 bg-[#E46C09] text-white font-semibold rounded-xl transition hover:bg-[#c95d05] shadow-sm text-sm"
                   >
                     Next →
                   </button>
                 ) : (
-                  <button 
+                  <button
                     onClick={calculateSelfAssessment}
                     className="py-3 px-6 bg-[#E46C09] text-white font-semibold rounded-xl transition hover:bg-[#c95d05] shadow-md text-sm animate-bounce"
                   >
@@ -859,8 +926,8 @@ function ArticlesContent() {
             </div>
           ) : (
             <div className="w-full">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Journey Complete 🎉</h2>
-              <iframe 
+              {/*  <h2 className="text-2xl font-bold text-gray-900 mb-6">Journey Complete 🎉</h2> */}
+              <iframe
                 src={certificateUrl}
                 className="w-full h-[800px] border-none rounded-[20px] bg-white shadow-inner"
                 title="Self Assessment Certificate"
@@ -890,7 +957,6 @@ function ArticlesContent() {
   );
 }
 
-// 🔹 Wrap inside Suspense Boundary for safety against Server-Side build-time parameters extraction
 export default function ArticlesPage() {
   return (
     <Suspense fallback={<div className="flex justify-center items-center min-h-screen font-sans text-[#E46C09] font-bold animate-pulse">Loading assessments...</div>}>
