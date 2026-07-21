@@ -14,6 +14,7 @@ interface Session {
   topic: string;
   thumbfile?: string;
   avatar?: string;
+  fieldOfStudy?: string;
 }
 
 interface CareerData {
@@ -338,7 +339,7 @@ function CompareCareersContent() {
         <div className="bg-[#e46c09] m-0 rounded-lg overflow-hidden shadow-md">
           <div className="cardtext">
             <div className="relative">
-              <div className="text-center px-[6px] pb-[6px] pt-2 text-white font-semibold text-[140%]">
+              <div className="text-center px-[6px] pb-[6px] pt-2 text-white font-semibold text-[100%] sm:text-[120%] md:text-[140%]">
                 {session.topic}
               </div>
               <img src={img} alt={session.topic} className="w-full h-auto block rounded-[6px]" />
@@ -371,41 +372,47 @@ function CompareCareersContent() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-[10px] sm:p-5 md:p-8 bg-gray-50 box-border">
       
-      <div className="max-w-[1170px] w-full my-0 mx-auto p-5 text-center bg-[#ffc000] border-2 border-black rounded-lg box-border">
+      {/* Parent Flex Container maintaining vertical alignment and horizontal centering */}
+      <div className="flex flex-col items-center gap-7 max-w-[1170px] w-full my-0 mx-auto">
         
-        <h2 className="text-2xl font-bold text-gray-900 max-[768px]:text-[18px] mb-[20px]">
-          Which Career do you prefer?
-        </h2>
-
-        <div className="flex gap-[30px] justify-center items-start group/parent max-[1024px]:gap-5 max-[768px]:flex-col max-[768px]:px-[10px]">
+        {/* Yellow Comparison Card */}
+        <div className="w-full p-5 text-center bg-[#ffc000] border-2 border-black rounded-lg box-border">
           
-          {/* SEARCH TARGET CAREER (LEFT CARD) */}
-          <div 
-            className="flex-1 max-w-[450px] cursor-pointer max-[1024px]:max-w-full"
-            onClick={selectLeft}
-          >
-            {renderCardContent(leftCareer, selectedSide === 'left')}
-            {selectedSide === 'left' && <RenderLearnMore count={leftClickCount} career={leftCareer} />}
-          </div>
+          <h2 className="text-2xl font-bold text-gray-900 max-[768px]:text-[18px] mb-[20px]">
+            Which Career do you prefer?
+          </h2>
 
-          {/* VS CONTAINER */}
-          <div className="flex items-center justify-center self-center py-4">
-            <img src="/vs.png" alt="VS" className="w-[80px] h-auto" />
-          </div>
+          <div className="flex justify-center items-start group/parent max-[1024px]:gap-5 max-[768px]:flex-col max-[768px]:px-[10px]">
+            
+            {/* SEARCH TARGET CAREER (LEFT CARD) */}
+            <div 
+              className="flex-1 max-w-[450px] cursor-pointer max-[1024px]:max-w-full"
+              onClick={selectLeft}
+            >
+              {renderCardContent(leftCareer, selectedSide === 'left')}
+              {selectedSide === 'left' && <RenderLearnMore count={leftClickCount} career={leftCareer} />}
+            </div>
 
-          {/* COMPARATIVE CAREER (RIGHT CARD) */}
-          <div 
-            className="flex-1 max-w-[450px] cursor-pointer max-[1024px]:max-w-full"
-            onClick={selectRight}
-          >
-            {renderCardContent(rightCareer, selectedSide === 'right')}
-            {selectedSide === 'right' && <RenderLearnMore count={rightClickCount} career={rightCareer} />}
+            {/* VS CONTAINER */}
+            <div className="flex items-center justify-center self-center">
+              <img src="/vs.png" alt="VS" className="w-[80px] h-auto" />
+            </div>
+
+            {/* COMPARATIVE CAREER (RIGHT CARD) */}
+            <div 
+              className="flex-1 max-w-[450px] cursor-pointer max-[1024px]:max-w-full"
+              onClick={selectRight}
+            >
+              {renderCardContent(rightCareer, selectedSide === 'right')}
+              {selectedSide === 'right' && <RenderLearnMore count={rightClickCount} career={rightCareer} />}
+            </div>
+
           </div>
 
         </div>
 
-        {/* Action button */}
-        <div className="mt-[25px]">
+        {/* None of the Above Button (Outside Yellow Card, Centered directly below it) */}
+        <div>
           <button 
             className="bg-[#363636] text-white font-bold py-3 px-6 rounded-[3px] border-none cursor-pointer shadow-[0_6px_10px_rgba(0,0,0,0.25)] transition hover:bg-gray-800 max-[480px]:w-full"
             onClick={nextCareer}
@@ -415,6 +422,7 @@ function CompareCareersContent() {
         </div>
 
       </div>
+
     </div>
   );
 }
