@@ -20,7 +20,7 @@ function CertificateContent() {
   const name = searchParams.get('name') || 'Career Seeker';
   const career = searchParams.get('career') || '';
   const score = searchParams.get('score') || '';
-  const image = searchParams.get('image') || 'support/choices.jpg';
+  const image = searchParams.get('image') || 'https://www.lifepage.in/support/choices.jpg';
   const profileid = searchParams.get('profileid') || '';
   const fieldOfStudy = searchParams.get('fieldOfStudy') || '';
 

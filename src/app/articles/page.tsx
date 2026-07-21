@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
@@ -59,7 +60,7 @@ function ArticlesContent() {
 
   const [articleTitle, setArticleTitle] = useState<string>("Deep dive into Your Career");
   const [topic, setTopic] = useState<string>('');
-  const [profileImageSrc, setProfileImageSrc] = useState<string>('support/choices.jpg');
+  const [profileImageSrc, setProfileImageSrc] = useState<string>('https://www.lifepage.in/support/choices.jpg');
 
   // Dynamic state indexes
   const [currentIndex, setCurrentIndex] = useState<number>(0);
