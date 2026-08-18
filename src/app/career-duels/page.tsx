@@ -681,7 +681,7 @@ export default function CareerDiscover() {
   };
 
   const renderCardContent = (career: CareerData | null, isSelected: boolean) => {
-    if (!career) return <p className="text-white py-10">Loading career data...</p>;
+    if (!career) return <p className="text-white py-10 font-medium">Finding matching comparison...</p>;
     const { session, questions } = career;
     const skills = questions.filter(q => q.que_category === 'Skills');
     const education = questions.filter(q => q.que_category === 'Education');
@@ -692,43 +692,69 @@ export default function CareerDiscover() {
 
     return (
       <div className="relative flex flex-col group/card">
-        {/* Tick Indicator Container */}
+        {/* Hover/Selection Tick Icon Overlay */}
         <div 
           className={`absolute top-[6%] left-[92%] -translate-x-1/2 -translate-y-1/2 w-[46px] h-[44px] bg-[url('https://www.lifepage.in/support/tick.png')] bg-no-repeat bg-center bg-contain transition-all duration-300 ease-in-out pointer-events-none z-[10]
             ${isSelected ? 'opacity-100 scale-100' : 'opacity-0 scale-75 group-hover/card:opacity-100 group-hover/card:scale-100 md:group-hover/parent:opacity-0'}`}
         />
         
-        <div className="bg-[#e46c09] m-0 rounded-lg overflow-hidden shadow-md">
-          <div className="cardtext">
-            <div className="relative">
-              <div className="text-[110%] text-center px-[6px] pb-[6px] pt-2 text-white font-semibold text-[100%] sm:text-[120%] md:text-[140%]">
+        <div className="bg-[#e46c09] m-0 rounded-lg overflow-hidden shadow-md flex flex-col">
+          <div className="cardtext flex flex-col h-full">
+            <div className="relative flex flex-col h-full">
+              {/* Header Title with Fixed Height & Centered Text */}
+              <div className="text-center px-[6px] py-2 text-white font-semibold text-[15px] sm:text-[18px] md:text-[20px] min-h-[48px] flex items-center justify-center leading-tight">
                 {session.topic}
               </div>
-              <img src={img} alt={session.topic} className="w-full h-auto block rounded-[6px]" />
-              
-              <div className="absolute inset-0 pointer-events-none">
-                {/* Skills Box */}
-                <div className="absolute top-[45px] right-[10px] bg-black/90 text-white p-2 rounded-[2px] text-[12px] max-w-[45%] z-[2] max-[768px]:text-[10px] max-[768px]:max-w-[60%] max-[768px]:right-[5px] max-[480px]:text-[9px] max-[480px]:p-[5px]">
-                  <div className="text-[110%] font-bold">Skills</div>
-                  <div className="text-[90%] leading-tight text-gray-300">
-                    {skills.map((s, idx) => <span key={idx}>{s.question}<br/></span>)}
-                  </div>
-                </div>
 
-                {/* Education Box */}
-                <div className="absolute top-[45px] left-[10px] bg-black/90 text-white p-2 rounded-[2px] text-[12px] max-w-[45%] z-[2] max-[768px]:text-[10px] max-[768px]:max-w-[60%] max-[768px]:left-[5px] max-[480px]:text-[9px] max-[480px]:p-[5px]">
-                  <div className="text-[110%] font-bold">Education</div>
-                  <div className="text-[90%] leading-tight text-gray-300">
-                    {education.map((e, idx) => <span key={idx}>{e.question}<br/></span>)}
+              {/* Card Image Wrapper */}
+              <div className="relative w-full aspect-[16/10] overflow-hidden">
+                <img 
+                  src={img} 
+                  alt={session.topic} 
+                  className="w-full h-full object-cover block rounded-b-[6px]" 
+                />
+
+                {/* Category Tags Container */}
+                <div className="absolute inset-0 pointer-events-none flex justify-between p-2">
+                  
+                  {/* Education Overlay Box */}
+                  <div className="bg-black/90 text-white p-2 rounded-[2px] w-[45%] h-[70%] overflow-y-auto z-[2] text-left border border-white/10 shadow-lg">
+                    <div className="text-[12px] sm:text-[13px] font-bold border-b border-gray-600 pb-1 mb-1 text-center">
+                      Education
+                    </div>
+                    <div className="text-[10px] sm:text-[11px] leading-tight text-gray-200 space-y-1">
+                      {education.slice(0, 4).map((e, idx) => (
+                        <div key={idx} className="truncate" title={e.question}>
+                          • {e.question}
+                        </div>
+                      ))}
+                    </div>
                   </div>
+
+                  {/* Skills Overlay Box */}
+                  <div className="bg-black/90 text-white p-2 rounded-[2px] w-[45%] h-[70%] overflow-y-auto z-[2] text-left border border-white/10 shadow-lg">
+                    <div className="text-[12px] sm:text-[13px] font-bold border-b border-gray-600 pb-1 mb-1 text-center">
+                      Skills
+                    </div>
+                    <div className="text-[10px] sm:text-[11px] leading-tight text-gray-200 space-y-1">
+                      {skills.slice(0, 4).map((s, idx) => (
+                        <div key={idx} className="truncate" title={s.question}>
+                          • {s.question}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                 </div>
               </div>
+
             </div>
           </div>
         </div>
       </div>
     );
   };
+
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center p-[15px] sm:p-5 md:p-8 bg-gray-50 box-border">

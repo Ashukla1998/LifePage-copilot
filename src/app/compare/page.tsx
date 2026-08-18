@@ -799,7 +799,7 @@ function CompareCareersContent() {
                       Education
                     </div>
                     <div className="text-[10px] sm:text-[11px] leading-tight text-gray-200 space-y-1">
-                      {education.map((e, idx) => (
+                      {education.slice(0, 4).map((e, idx) => (
                         <div key={idx} className="truncate" title={e.question}>
                           • {e.question}
                         </div>
@@ -813,7 +813,7 @@ function CompareCareersContent() {
                       Skills
                     </div>
                     <div className="text-[10px] sm:text-[11px] leading-tight text-gray-200 space-y-1">
-                      {skills.map((s, idx) => (
+                      {skills.slice(0, 4).map((s, idx) => (
                         <div key={idx} className="truncate" title={s.question}>
                           • {s.question}
                         </div>
