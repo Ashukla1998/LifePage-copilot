@@ -18,11 +18,13 @@ const TRENDING_CAREERS = [
 interface TrendingMarqueeProps {
   onSelectCareer: (career: string) => void;
   onResetCareer: () => void;
+  topic?: string;           
+  items?: string[];
 }
 
 export default function TrendingMarquee({
   onSelectCareer,
-  onResetCareer,
+  onResetCareer,topic,items
 }: TrendingMarqueeProps) {
   const [selectedCareer, setSelectedCareer] = useState<string | null>(null);
 
@@ -62,7 +64,7 @@ export default function TrendingMarquee({
             animationPlayState: isPaused ? "paused" : "running",
           }}
         >
-          {TRENDING_CAREERS.concat(TRENDING_CAREERS).map((career, index) => {
+          {(items || TRENDING_CAREERS).map((career, index) => {
             const isSelected = selectedCareer === career;
 
             return (
