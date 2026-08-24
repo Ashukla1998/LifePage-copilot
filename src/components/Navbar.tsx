@@ -12,7 +12,7 @@ export default function Navbar({ careerCount }: NavbarProps) {
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-[url('/topbg.jpg')] bg-cover bg-center bg-no-repeat shadow-sm text-white shrink-0">
-      <div className="bg-black/30">
+      {/* <div className="bg-black/30"> */}
         <div className="relative mx-auto flex h-16 max-w-7xl items-center px-4 sm:px-6 lg:px-8">
           {/* Left Logo */}
           <div className="flex items-center">
@@ -29,14 +29,14 @@ export default function Navbar({ careerCount }: NavbarProps) {
           {/* Center Title */}
           <div className="absolute left-1/2 -translate-x-1/2">
             <h1 className="text-center text-sm font-semibold sm:text-lg md:text-xl">
-              World's largest Career Repositories of{" "}
+              World's largest Career Repository of{" "}
               <span className="text-orange-600 font-bold">
                 {formattedCount}
               </span>{" "}
-              Careers
+              Careers!
             </h1>
           </div>
-        </div>
+        {/* </div> */}
       </div>
     </nav>
   );
