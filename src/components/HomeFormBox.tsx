@@ -70,7 +70,6 @@ const HomeFormBox = forwardRef<HTMLInputElement, HomeFormBoxProps>(
             body: JSON.stringify(body),
           }
         );
-
         const data = await res.json();
         console.log("Session updated:", data);
       } catch (err) {
@@ -92,7 +91,7 @@ const HomeFormBox = forwardRef<HTMLInputElement, HomeFormBoxProps>(
     };
 
     return (
-      <div className="w-full max-w-[500px] rounded-sm border border-black bg-[#ffc000] p-6 text-center text-[#262626] shadow-sm sm:p-8">
+      <div className="w-full max-w-[500px] rounded-sm border border-black bg-[#ffc000] p-6 text-center text-[#262626] shadow-sm sm:p-8 shrink-0">
         <h2 className="mb-4 text-lg font-bold leading-[1.3] sm:text-xl">
           Which Career are you interested in?
         </h2>
@@ -135,6 +134,7 @@ const HomeFormBox = forwardRef<HTMLInputElement, HomeFormBoxProps>(
 
         {/* Discovery Button */}
         <button
+          type="button"
           onClick={handleDiscovery}
           className="inline-flex w-full sm:w-[60%] items-center justify-center gap-2 rounded bg-[#363636] px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-black"
         >

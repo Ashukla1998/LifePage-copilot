@@ -18,37 +18,41 @@ const TRENDING_CAREERS = [
 interface TrendingMarqueeProps {
   onSelectCareer: (career: string) => void;
   onResetCareer: () => void;
-  topic?: string;           
+  topic?: string;
   items?: string[];
 }
 
 export default function TrendingMarquee({
   onSelectCareer,
-  onResetCareer,topic,items
+  onResetCareer,
+  topic,
+  items,
 }: TrendingMarqueeProps) {
   const [selectedCareer, setSelectedCareer] = useState<string | null>(null);
 
-  const handleClick = (e: React.MouseEvent<HTMLButtonElement>, career: string) => {
-    // Remove default button focus outline/styles
+  const handleClick = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    career: string
+  ) => {
     e.currentTarget.blur();
 
     if (selectedCareer === career) {
-      // Second click: Reset, unpause, and restore original colors
       setSelectedCareer(null);
       onResetCareer();
     } else {
-      // First click: Select, pause, and highlight in yellow
       setSelectedCareer(career);
       onSelectCareer(career);
     }
   };
 
   const isPaused = selectedCareer !== null;
+  const list = items && items.length > 0 ? items : TRENDING_CAREERS;
+  const duplicatedList = [...list, ...list];
 
   return (
-    <section className="w-full max-w-4xl mt-6 sm:mt-8 text-center shrink-0">
-      <h3 className="mb-2 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-500">
-        🔥 Trending Careers
+    <section className="w-full max-w-4xl text-center shrink-0">
+      <h3 className="mb-3 text-[11px] sm:text-xs font-bold uppercase tracking-wider text-gray-500">
+        🔥 {topic || "Trending Careers"}
       </h3>
 
       {/* Marquee Outer Container */}
@@ -59,12 +63,15 @@ export default function TrendingMarquee({
 
         {/* Continuous Scrolling Track */}
         <div
-          className="flex shrink-0 animate-marquee gap-2.5 group-hover:[animation-play-state:paused]"
+          className={`flex shrink-0 gap-2.5 group-hover:[animation-play-state:paused] ${
+            isPaused ? "[animation-play-state:paused]" : ""
+          }`}
           style={{
-            animationPlayState: isPaused ? "paused" : "running",
+            animation: "marquee 35s linear infinite",
+            animationPlayState: isPaused ? "paused" : undefined,
           }}
         >
-          {(items || TRENDING_CAREERS).map((career, index) => {
+          {duplicatedList.map((career, index) => {
             const isSelected = selectedCareer === career;
 
             return (
@@ -85,17 +92,10 @@ export default function TrendingMarquee({
         </div>
       </div>
 
-      <style jsx global>{`
+      <style>{`
         @keyframes marquee {
-          0% {
-            transform: translateX(0%);
-          }
-          100% {
-            transform: translateX(-50%);
-          }
-        }
-        .animate-marquee {
-          animation: marquee 25s linear infinite;
+          0% { transform: translateX(0%); }
+          100% { transform: translateX(-50%); }
         }
       `}</style>
     </section>
