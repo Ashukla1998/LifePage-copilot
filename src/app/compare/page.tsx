@@ -368,10 +368,10 @@ function CompareCareersContent() {
     const renderOverlayCategory = (title: string, items: Question[]) => {
       return (
         <div className="bg-black/90 text-white p-1.5 rounded-[3px] h-full overflow-hidden border border-white/10 shadow-sm flex flex-col justify-start">
-          <div className="text-[11px] sm:text-[11px] font-bold border-b border-gray-600 pb-0.5 mb-1 text-center text-orange-400 shrink-0">
+          <div className="text-[10px] sm:text-[11px] font-bold border-b border-gray-600 pb-0.5 mb-1 text-center text-orange-400 shrink-0">
             {title}
           </div>
-          <div className="text-[11px] leading-snug text-gray-200 space-y-0.5 overflow-hidden text-left">
+          <div className="text-[9px] leading-snug text-gray-200 space-y-0.5 overflow-hidden">
             {items.slice(0, 3).map((item, idx) => (
               <div key={idx} className="truncate" title={item.question}>
                 • {item.question}
@@ -418,16 +418,19 @@ function CompareCareersContent() {
 
   return (
     <div className="h-screen h-dvh w-full bg-gray-50 flex flex-col overflow-hidden">
+      {/* 🔹 Fixed / Sticky Top Navbar */}
       <Navbar careerCount={count} />
 
-      <main className="flex-1 w-full max-w-5xl mx-auto flex flex-col items-center justify-center p-3 sm:p-4 min-h-0">
-        <div className="flex flex-col items-center gap-3 w-full my-auto">
-          <div className="w-full p-4 text-center bg-[#ffc000] border-2 border-black rounded-lg shadow-sm">
-            <h2 className="text-lg sm:text-xl font-bold mb-3 text-gray-900">
+      {/* 🔹 Scrollable Main Content Area */}
+      <main className="flex-1 w-full overflow-y-auto px-4 py-6 sm:py-8 box-border">
+        <div className="flex flex-col items-center gap-6 max-w-5xl w-full mx-auto">
+          {/* Yellow Card */}
+          <div className="w-full p-4 sm:p-6 text-center bg-[#ffc000] border-2 border-black rounded-lg shadow-sm">
+            <h2 className="text-lg sm:text-xl font-bold mb-4 text-gray-900">
               Which Career do you prefer?
             </h2>
 
-            <div className="flex gap-4 sm:gap-6 justify-center items-start group/parent max-[768px]:flex-col max-[768px]:items-center">
+            <div className="flex gap-4 sm:gap-6 justify-center items-center md:items-start group/parent max-[768px]:flex-col max-[768px]:items-center">
               {/* LEFT COLUMN */}
               <div
                 className="flex-1 max-w-[420px] w-full flex flex-col cursor-pointer"
@@ -442,7 +445,7 @@ function CompareCareersContent() {
               </div>
 
               {/* VS DIVISION */}
-              <div className="flex items-center justify-center self-center sm:self-start sm:pt-36 shrink-0">
+              <div className="flex items-center justify-center self-center md:self-start md:pt-36 shrink-0 my-2 md:my-0">
                 <img src="/vs.png" alt="VS" className="w-12 sm:w-16 h-auto" />
               </div>
 
@@ -461,9 +464,10 @@ function CompareCareersContent() {
             </div>
           </div>
 
-          <div className="shrink-0">
+          {/* None of the Above Button */}
+          <div className="shrink-0 pb-4">
             <button
-              className="bg-[#363636] text-white font-bold py-2.5 px-6 rounded-[3px] text-xs sm:text-sm border-none cursor-pointer shadow-md transition hover:bg-gray-800"
+              className="bg-[#363636] text-white font-bold py-2.5 px-6 rounded-[3px] text-xs sm:text-sm border-none cursor-pointer shadow-md transition hover:bg-gray-800 active:scale-95"
               onClick={nextCareer}
             >
               None of the Above
