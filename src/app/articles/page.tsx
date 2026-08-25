@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Navbar from '../../components/Navbar';
 
 // 🔹 TypeScript Interfaces
 interface QuestionDetail {
@@ -57,9 +58,10 @@ function ArticlesContent() {
   const profileIdFromUrl = searchParams.get('profileid') || '';
   const fieldOfStudyFromUrl = searchParams.get('fieldOfStudy') || '';
 
+  const [count, setCount] = useState<string>('');
   const [articleTitle, setArticleTitle] = useState<string>("Deep dive into Your Career");
   const [topic, setTopic] = useState<string>('');
-  const [profileImageSrc, setProfileImageSrc] = useState<string>('https://www.lifepage.in/support/choices.jpg');
+  const [profileImageSrc, setProfileImageSrc] = useState<string>('/choices.jpg');
 
   // Dynamic state indexes
   const [currentIndex, setCurrentIndex] = useState<number>(0);
@@ -86,9 +88,8 @@ function ArticlesContent() {
   const weights = useRef<Record<string, number>>({});
   const sessionId = useRef<string>('');
   const userResponses = useRef<UserResponses>({ maxScore: 10, questions: [] });
-  // const displayedSessionIds = useRef<Set<string>>(new Set());
 
-  //Youtube video of play 
+  // Youtube video of play 
   const [videoUrl, setVideoUrl] = useState<string>('');
 
   const profileId = useRef<string>('');
@@ -103,6 +104,25 @@ function ArticlesContent() {
       ? `https://www.youtube.com/embed/${match[2]}`
       : url;
   };
+
+  // 🔹 Fetch Navbar Data
+  useEffect(() => {
+    const fetchNavbarData = async () => {
+      try {
+        const res = await fetch('https://www.lifepage.in/n/api/navbar', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        const json = await res.json();
+        if (json.success === 1) {
+          setCount(json.count);
+        }
+      } catch (error) {
+        console.error('Error fetching navbar data:', error);
+      }
+    };
+    fetchNavbarData();
+  }, []);
 
   // 🔹 Sync Initial URL variables & session storage on load
   useEffect(() => {
@@ -322,7 +342,7 @@ function ArticlesContent() {
 
       if (imageEnabled) {
         if (isAi.current) {
-          currentSub.image = "/ai.jpg"; // Updated static image path for AI articles
+          currentSub.image = "/ai.jpg";
         } else {
           currentSub.image = getImageUrl();
           imageCounter += 1;
@@ -336,7 +356,7 @@ function ArticlesContent() {
     const finishCategory = () => {
       pushSub();
       if (imageEnabled) {
-        imageCounter += 1; // GAP after category
+        imageCounter += 1;
       }
     };
 
@@ -748,207 +768,212 @@ function ArticlesContent() {
   const activeContent = section?.content[contentIndex];
 
   return (
-    <div className="w-full min-h-screen bg-white font-sans box-border">
-      <div className="max-w-[1280px] mx-auto grid grid-cols-[400px_1fr] gap-12 max-[1024px]:grid-cols-1 max-[1024px]:gap-14 max-[1024px]:py-14 max-[1024px]:px-5">
+    <div className="w-full min-h-screen bg-white font-sans box-border flex flex-col">
+      {/* 🔹 Top Navbar */}
+      <Navbar careerCount={count} />
 
-        {/* LEFT COLUMN */}
-        <div className="flex flex-col items-center gap-6 w-full">
-          <h4 className="text-xl font-bold text-gray-800">
-            Career in <span className="text-[#E46C09]">{topic || fieldOfStudy.current}</span>
-          </h4>
+      {/* Main Content Area */}
+      <main className="flex-1 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-[400px_1fr] gap-12 max-[1024px]:grid-cols-1 max-[1024px]:gap-14">
 
-          {/* Profile Canvas Container */}
-          <div
-            id="avatar-download-target"
-            className="w-[220px] h-[220px] rounded-full overflow-hidden relative border border-[#323232]"
-            style={{ backgroundColor: '#e5e7eb' }}
-          >
-            <img
-              id="profileImage"
-              src={profileImageSrc}
-              crossOrigin="anonymous"
-              className="w-full h-full object-cover transition-all duration-600"
-              alt="Career Profile"
-            />
+          {/* LEFT COLUMN */}
+          <div className="flex flex-col items-center gap-6 w-full">
+            <h4 className="text-xl font-bold text-gray-800">
+              Career in <span className="text-[#E46C09]">{topic || fieldOfStudy.current}</span>
+            </h4>
 
+            {/* Profile Canvas Container */}
             <div
-              className="rounded-lg absolute bottom-0 left-1/2 -translate-x-1/2 w-[213px] h-[51px] flex flex-col justify-between items-center py-1 text-white z-10"
-              style={{ backgroundColor: '#363636' }}
+              id="avatar-download-target"
+              className="w-[220px] h-[220px] rounded-full overflow-hidden relative border border-[#323232]"
+              style={{ backgroundColor: '#e5e7eb' }}
             >
-              <span className="text-[10px] text-[#E46C09] font-semibold">www.lifepage.in/ai</span>
-              <div className="w-[136px] h-[1px]" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
-              <span className="text-[12px] font-medium mb-1">
-                {dreamIndexScore !== null
-                  ? `${savedName || "Career Seeker"} ${dreamIndexScore}%`
-                  : (savedName || "Career Seeker")}
-              </span>
+              <img
+                id="profileImage"
+                src={profileImageSrc}
+                crossOrigin="anonymous"
+                className="w-full h-full object-cover transition-all duration-600"
+                alt="Career Profile"
+              />
+
+              <div
+                className="rounded-lg absolute bottom-0 left-1/2 -translate-x-1/2 w-[213px] h-[51px] flex flex-col justify-between items-center py-1 text-white z-10"
+                style={{ backgroundColor: '#363636' }}
+              >
+                <span className="text-[10px] text-[#E46C09] font-semibold">www.lifepage.in/ai</span>
+                <div className="w-[136px] h-[1px]" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                <span className="text-[12px] font-medium mb-1">
+                  {dreamIndexScore !== null
+                    ? `${savedName || "Career Seeker"} ${dreamIndexScore}%`
+                    : (savedName || "Career Seeker")}
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div className="flex flex-row justify-center gap-4 w-full">
-            {dreamIndexScore !== null && (
-              <button onClick={handleDownloadAvatar} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">
-                Download Avatar
-              </button>
-            )}
-
-            <div className="flex gap-2 items-center">
-              {!isEditingName ? (
-                <button onClick={() => { setIsEditingName(true); setNameInputValue(savedName); }} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">
-                  {savedName ? 'Edit Name' : '+ Add Name'}
+            <div className="flex flex-row justify-center gap-4 w-full">
+              {dreamIndexScore !== null && (
+                <button onClick={handleDownloadAvatar} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">
+                  Download Avatar
                 </button>
-              ) : (
-                <div className="flex items-center gap-2">
-                  <input type="text" placeholder="Enter your name" value={nameInputValue} onChange={(e) => setNameInputValue(e.target.value)} className="p-3 text-sm rounded-xl border border-black text-black bg-white focus:outline-none" />
-                  <button onClick={handleSaveName} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">Save</button>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* RIGHT COLUMN */}
-        <div className="bg-[#f9fafb] p-5 sm:p-10 rounded-[28px] shadow-sm border border-gray-100 box-border">
-
-          {!isJourneyComplete ? (
-            <div id="assessmentContent">
-              {isAiLoading && (
-                <div className="text-center p-5 font-semibold text-[#E46C09] animate-pulse">
-                  AI is generating your career insights... please wait ({countdown}s)
-                </div>
               )}
 
-              {/* Progress Steps Header */}
-              <div className="grid grid-cols-6 gap-2 mb-6 text-xs text-center font-bold">
-                {orbitConfig.map((config, idx) => {
-                  const label = config.label.toLowerCase();
-                  const sectionIndex = sections.findIndex(s => s.title.toLowerCase().startsWith(label));
-                  const isCompleted = sectionIndex !== -1 && (sectionIndex < currentIndex);
-                  const isActive = section?.title.toLowerCase().startsWith(label);
-
-                  return (
-                    <div
-                      key={idx}
-                      className="flex-1 min-w-0 text-center px-1.5 py-1 sm:p-2 rounded-lg border font-bold text-xs sm:text-sm md:text-base leading-tight transition-all duration-300 break-words flex items-center justify-center"
-                      style={{
-                        backgroundColor: isCompleted ? '#E46C09' : '#ffffff',
-                        color: isCompleted ? '#ffffff' : isActive ? '#111827' : '#9ca3af',
-                        borderColor: isActive ? '#E46C09' : '#363636',
-                        borderWidth: isActive ? '2px' : '1px'
-                      }}
-                    >
-                      {config.label}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Slider Progress HUD */}
-              <div className="flex justify-between font-bold text-sm text-gray-500 mb-1">
-                <span>Progress</span>
-                <span className="text-gray-900">{percent}%</span>
-              </div>
-              <div className="h-3 bg-gray-200 rounded-full overflow-hidden mb-6">
-                <div className="h-full bg-[#E46C09] transition-all duration-600" style={{ width: `${percent}%` }} />
-              </div>
-
-              {activeContent && !activeContent.image && (
-                <h1 className="text-2xl font-extrabold text-gray-900 leading-snug mb-5 max-sm:text-[20px]">
-                  {articleTitle}
-                </h1>
-              )}
-
-              {/* Sub-Card Grid Container */}
-              <div className="flex md:flex-row flex-col gap-5 items-start mt-4 mb-6">
-                <div className="flex-1 w-full max-w-[700px] mx-auto">
-
-                  {activeContent?.image && (
-                    <div className="relative mb-6">
-                      {isAi.current && (
-                        <div className="absolute top-0 left-0 w-full bg-[#323232]/90 text-white p-3 font-semibold flex justify-between items-center text-sm rounded-t-lg">
-                          <span>[{section?.title}] {activeContent.subtitle}</span>
-                        </div>
-                      )}
-                      <div className={`grid gap-4 items-center ${videoUrl && activeContent?.image ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-                        {/* Left: YouTube Player */}
-                        {videoUrl && (
-                          <div className="w-full aspect-video rounded-lg overflow-hidden shadow-md bg-black">
-                            <iframe
-                              src={getYouTubeEmbedUrl(videoUrl)}
-                              title="Career Video"
-                              className="w-full h-full border-0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                            />
-                          </div>
-                        )}
-
-                        {/* Right: Step Image */}
-                        {activeContent?.image && (
-                          <div className="w-full h-full flex items-center justify-center">
-                            <img
-                              src={activeContent.image}
-                              className={`w-full block rounded-lg shadow-md object-fit ${videoUrl ? 'aspect-video max-h-[400px]' : 'h-auto max-h-[500px]'
-                                }`}
-                              alt="Step visual"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  {getDynamicQuestionElement()}
-                </div>
-              </div>
-
-              <div className="flex justify-between items-center gap-6 mt-6">
-                <button onClick={handleBack} className={`py-3 px-6 bg-[#363636] text-white font-semibold rounded-xl transition hover:bg-gray-800 shadow-sm text-sm ${(currentIndex === 0 && contentIndex === 0) ? 'invisible' : 'visible'}`}>← Back</button>
-                {!isCompletedStep() ? (
-                  <button
-                    onClick={handleNext}
-                    className="py-3 px-6 bg-[#E46C09] text-white font-semibold rounded-xl transition hover:bg-[#c95d05] shadow-sm text-sm"
-                  >
-                    Next →
+              <div className="flex gap-2 items-center">
+                {!isEditingName ? (
+                  <button onClick={() => { setIsEditingName(true); setNameInputValue(savedName); }} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">
+                    {savedName ? 'Edit Name' : '+ Add Name'}
                   </button>
                 ) : (
-                  <button
-                    onClick={calculateSelfAssessment}
-                    className="py-3 px-6 bg-[#E46C09] text-white font-semibold rounded-xl transition hover:bg-[#c95d05] shadow-md text-sm animate-bounce"
-                  >
-                    Calculate Self Assessment
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <input type="text" placeholder="Enter your name" value={nameInputValue} onChange={(e) => setNameInputValue(e.target.value)} className="p-3 text-sm rounded-xl border border-black text-black bg-white focus:outline-none" />
+                    <button onClick={handleSaveName} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">Save</button>
+                  </div>
                 )}
               </div>
             </div>
-          ) : (
-            <div className="w-full">
-              <iframe
-                src={certificateUrl}
-                className="w-full h-[800px] border-none rounded-[20px] bg-white shadow-inner"
-                title="Self Assessment Certificate"
-              />
-            </div>
-          )}
+          </div>
+
+          {/* RIGHT COLUMN */}
+          <div className="bg-[#f9fafb] p-5 sm:p-10 rounded-[28px] shadow-sm border border-gray-100 box-border">
+
+            {!isJourneyComplete ? (
+              <div id="assessmentContent">
+                {isAiLoading && (
+                  <div className="text-center p-5 font-semibold text-[#E46C09] animate-pulse">
+                    AI is generating your career insights... please wait ({countdown}s)
+                  </div>
+                )}
+
+                {/* Progress Steps Header */}
+                <div className="grid grid-cols-6 gap-2 mb-6 text-xs text-center font-bold">
+                  {orbitConfig.map((config, idx) => {
+                    const label = config.label.toLowerCase();
+                    const sectionIndex = sections.findIndex(s => s.title.toLowerCase().startsWith(label));
+                    const isCompleted = sectionIndex !== -1 && (sectionIndex < currentIndex);
+                    const isActive = section?.title.toLowerCase().startsWith(label);
+
+                    return (
+                      <div
+                        key={idx}
+                        className="flex-1 min-w-0 text-center px-1.5 py-1 sm:p-2 rounded-lg border font-bold text-xs sm:text-sm md:text-base leading-tight transition-all duration-300 break-words flex items-center justify-center"
+                        style={{
+                          backgroundColor: isCompleted ? '#E46C09' : '#ffffff',
+                          color: isCompleted ? '#ffffff' : isActive ? '#111827' : '#9ca3af',
+                          borderColor: isActive ? '#E46C09' : '#363636',
+                          borderWidth: isActive ? '2px' : '1px'
+                        }}
+                      >
+                        {config.label}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Slider Progress HUD */}
+                <div className="flex justify-between font-bold text-sm text-gray-500 mb-1">
+                  <span>Progress</span>
+                  <span className="text-gray-900">{percent}%</span>
+                </div>
+                <div className="h-3 bg-gray-200 rounded-full overflow-hidden mb-6">
+                  <div className="h-full bg-[#E46C09] transition-all duration-600" style={{ width: `${percent}%` }} />
+                </div>
+
+                {activeContent && !activeContent.image && (
+                  <h1 className="text-2xl font-extrabold text-gray-900 leading-snug mb-5 max-sm:text-[20px]">
+                    {articleTitle}
+                  </h1>
+                )}
+
+                {/* Sub-Card Grid Container */}
+                <div className="flex md:flex-row flex-col gap-5 items-start mt-4 mb-6">
+                  <div className="flex-1 w-full max-w-[700px] mx-auto">
+
+                    {activeContent?.image && (
+                      <div className="relative mb-6">
+                        {isAi.current && (
+                          <div className="absolute top-0 left-0 w-full bg-[#323232]/90 text-white p-3 font-semibold flex justify-between items-center text-sm rounded-t-lg">
+                            <span>[{section?.title}] {activeContent.subtitle}</span>
+                          </div>
+                        )}
+                        <div className={`grid gap-4 items-center ${videoUrl && activeContent?.image ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                          {/* Left: YouTube Player */}
+                          {videoUrl && (
+                            <div className="w-full aspect-video rounded-lg overflow-hidden shadow-md bg-black">
+                              <iframe
+                                src={getYouTubeEmbedUrl(videoUrl)}
+                                title="Career Video"
+                                className="w-full h-full border-0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            </div>
+                          )}
+
+                          {/* Right: Step Image */}
+                          {activeContent?.image && (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <img
+                                src={activeContent.image}
+                                className={`w-full block rounded-lg shadow-md object-fit ${videoUrl ? 'aspect-video max-h-[400px]' : 'h-auto max-h-[500px]'
+                                  }`}
+                                alt="Step visual"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {getDynamicQuestionElement()}
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center gap-6 mt-6">
+                  <button onClick={handleBack} className={`py-3 px-6 bg-[#363636] text-white font-semibold rounded-xl transition hover:bg-gray-800 shadow-sm text-sm ${(currentIndex === 0 && contentIndex === 0) ? 'invisible' : 'visible'}`}>← Back</button>
+                  {!isCompletedStep() ? (
+                    <button
+                      onClick={handleNext}
+                      className="py-3 px-6 bg-[#E46C09] text-white font-semibold rounded-xl transition hover:bg-[#c95d05] shadow-sm text-sm"
+                    >
+                      Next →
+                    </button>
+                  ) : (
+                    <button
+                      onClick={calculateSelfAssessment}
+                      className="py-3 px-6 bg-[#E46C09] text-white font-semibold rounded-xl transition hover:bg-[#c95d05] shadow-md text-sm animate-bounce"
+                    >
+                      Calculate Self Assessment
+                    </button>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="w-full">
+                <iframe
+                  src={certificateUrl}
+                  className="w-full h-[800px] border-none rounded-[20px] bg-white shadow-inner"
+                  title="Self Assessment Certificate"
+                />
+              </div>
+            )}
+
+          </div>
 
         </div>
 
-      </div>
-
-      {/* Expanded Bottom Text Subtitle details */}
-      {activeContent && (
-        <div id="bottomTextContainer" className="mt-10 max-w-[1240px] mx-auto p-8 bg-[#363636] text-white rounded-2xl text-left shadow-lg">
-          {activeContent.subtitle && (
-            <h3 className="text-center font-bold text-xl text-[#E46C09] mb-4">
-              {activeContent.subtitle}
-            </h3>
-          )}
-          <p className="text-gray-200 text-md leading-[1.8] whitespace-pre-wrap">
-            {activeContent.text}
-          </p>
-        </div>
-      )}
-
+        {/* Expanded Bottom Text Subtitle details */}
+        {activeContent && (
+          <div id="bottomTextContainer" className="mt-10 max-w-[1240px] mx-auto p-8 bg-[#363636] text-white rounded-2xl text-left shadow-lg">
+            {activeContent.subtitle && (
+              <h3 className="text-center font-bold text-xl text-[#E46C09] mb-4">
+                {activeContent.subtitle}
+              </h3>
+            )}
+            <p className="text-gray-200 text-md leading-[1.8] whitespace-pre-wrap">
+              {activeContent.text}
+            </p>
+          </div>
+        )}
+      </main>
     </div>
   );
 }
