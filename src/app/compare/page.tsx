@@ -367,7 +367,7 @@ function CompareCareersContent() {
 
     const renderOverlayCategory = (title: string, items: Question[]) => {
       return (
-        <div className="bg-black/90 text-white p-1.5 rounded-[3px] h-full overflow-hidden border border-white/10 shadow-sm flex flex-col justify-start">
+        <div className="bg-[rgba(0,0,0,0.8)] text-white p-1.5 rounded-[3px] h-[80%] overflow-hidden border border-white/10 shadow-sm flex flex-col justify-start">
           <div className="text-[10px] sm:text-[11px] font-bold border-b border-gray-600 pb-0.5 mb-1 text-center text-orange-400 shrink-0">
             {title}
           </div>

@@ -36,30 +36,30 @@ export default function CareerDiscover() {
 
   const [leftClickCount, setLeftClickCount] = useState<number>(0);
   const [rightClickCount, setRightClickCount] = useState<number>(0);
-  const [count, setCount] = useState<string>('');
+  // const [count, setCount] = useState<string>('');
 
   const excludeList = useRef<string[]>([]);
   const lastSelected = useRef<'left' | 'right' | null>(null);
   const usedQuestionsMap = useRef<Record<string, Set<string>>>({});
 
   // 🔹 FETCH NAVBAR DATA
-  useEffect(() => {
-    const fetchNavbarData = async () => {
-      try {
-        const res = await fetch('https://www.lifepage.in/n/api/navbar', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const json = await res.json();
-        if (json.success === 1) {
-          setCount(json.count);
-        }
-      } catch (error) {
-        console.error('Error fetching navbar data:', error);
-      }
-    };
-    fetchNavbarData();
-  }, []);
+  // useEffect(() => {
+  //   const fetchNavbarData = async () => {
+  //     try {
+  //       const res = await fetch('https://www.lifepage.in/n/api/navbar', {
+  //         method: 'GET',
+  //         headers: { 'Content-Type': 'application/json' },
+  //       });
+  //       const json = await res.json();
+  //       if (json.success === 1) {
+  //         setCount(json.count);
+  //       }
+  //     } catch (error) {
+  //       console.error('Error fetching navbar data:', error);
+  //     }
+  //   };
+  //   fetchNavbarData();
+  // }, []);
 
   // 🔹 INIT DATA FETCH
   useEffect(() => {
@@ -325,7 +325,7 @@ export default function CareerDiscover() {
 
     const renderOverlayCategory = (title: string, items: Question[]) => {
       return (
-        <div className="bg-black/90 text-white p-1.5 rounded-[3px] h-full overflow-hidden border border-white/10 shadow-sm flex flex-col justify-start">
+        <div className="bg-[rgba(0,0,0,0.8)] text-white p-1.5 rounded-[3px] h-[80%] overflow-hidden border border-white/10 shadow-sm flex flex-col justify-start">
           <div className="text-[11px] sm:text-[11px] font-bold border-b border-gray-600 pb-0.5 mb-1 text-center text-orange-400 shrink-0">
             {title}
           </div>
@@ -381,7 +381,7 @@ export default function CareerDiscover() {
   return (
     <div className="h-screen h-dvh w-full bg-gray-50 flex flex-col overflow-hidden">
       {/* 🔹 Fixed / Sticky Top Navbar */}
-      <Navbar careerCount={count} />
+      <Navbar  />
 
       {/* 🔹 Scrollable Main Content Area */}
       <main className="flex-1 w-full overflow-y-auto px-4 py-6 sm:py-8 box-border">
