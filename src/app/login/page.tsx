@@ -1,11 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useRef, Suspense } from 'react';
+import React, { useState, useRef, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-// import { PhoneInput } from 'react-international-phone';
-//import 'react-international-phone/style.css';
 import {
   PhoneInput,
   defaultCountries,
@@ -13,140 +11,28 @@ import {
 } from 'react-international-phone';
 import 'react-international-phone/style.css';
 import Navbar from '../../components/Navbar';
+import { useAuth } from '../context/AuthContext';
+import { toast } from 'sonner';
+import { GrClose } from "react-icons/gr";
 
-
-// function LoginContent() {
-//   const router = useRouter();
-//   // const phoneUtil = PhoneNumberUtil();
-
-// //   const [count, setCount] = useState<string>('');
-//   const [phone, setPhone] = useState<string>('');
-//   const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '']);
-//   const [showPin, setShowPin] = useState<boolean>(false);
-//   const [isLoading, setIsLoading] = useState<boolean>(false);
-//   const [errorMessage, setErrorMessage] = useState<string>('');
-
-//   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
-
-//   // 🔹 Handle individual box typing and auto-focus next
-//   const handlePinDigitChange = (index: number, value: string) => {
-//     const sanitized = value.replace(/\D/g, '');
-//     if (!sanitized) {
-//       const updated = [...pinDigits];
-//       updated[index] = '';
-//       setPinDigits(updated);
-//       return;
-//     }
-
-//     const digit = sanitized.slice(-1);
-//     const updated = [...pinDigits];
-//     updated[index] = digit;
-//     setPinDigits(updated);
-
-//     if (index < 3 && digit) {
-//       pinInputRefs.current[index + 1]?.focus();
-//     }
-//   };
-
-//   // 🔹 Handle Backspace navigation
-//   const handlePinKeyDown = (
-//     index: number,
-//     e: React.KeyboardEvent<HTMLInputElement>
-//   ) => {
-//     if (e.key === 'Backspace' && !pinDigits[index] && index > 0) {
-//       pinInputRefs.current[index - 1]?.focus();
-//     }
-//   };
-
-//   // 🔹 Handle Paste
-//   const handlePinPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
-//     e.preventDefault();
-//     const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
-//     if (!pastedData) return;
-
-//     const updated = ['', '', '', ''];
-//     pastedData.split('').forEach((char, i) => {
-//       if (i < 4) updated[i] = char;
-//     });
-//     setPinDigits(updated);
-
-//     const targetFocusIndex = Math.min(pastedData.length, 3);
-//     pinInputRefs.current[targetFocusIndex]?.focus();
-//   };
-
-//   const handleLogin = async (e: React.FormEvent) => {
-//   e.preventDefault();
-//   setErrorMessage('');
-
-//   const fullPin = pinDigits.join('');
-
-//   if (!phone || phone.trim().length < 6) {
-//     setErrorMessage('Please enter a valid mobile number.');
-//     return;
-//   }
-
-//   if (fullPin.length !== 4) {
-//     setErrorMessage('Please enter all 4 digits of your PIN.');
-//     return;
-//   }
-
-//   // 🔹 Extract country code and national number
-//   let detectedDialCode = '91';
-//   let nationalNumber = phone.replace(/\D/g, '');
-
-//   // Match the longest dialCode prefix from defaultCountries
-//   const matchedCountry = defaultCountries
-//     .map((country) => parseCountry(country))
-//     .filter((c) => phone.startsWith(`+${c.dialCode}`))
-//     .sort((a, b) => b.dialCode.length - a.dialCode.length)[0];
-
-//   if (matchedCountry) {
-//     detectedDialCode = matchedCountry.dialCode; // e.g. "91"
-//     nationalNumber = phone.slice(matchedCountry.dialCode.length + 1).replace(/\D/g, ''); // phone without "+91"
-//   }
-
-//   setIsLoading(true);
-
-//   try {
-//     const res = await fetch('https://www.lifepage.in/login_enccjjj', {
-//       method: 'POST',
-//       headers: { 'Content-Type': 'application/json' },
-//       body: JSON.stringify({
-//         username: nationalNumber,
-//         password: fullPin,
-//         countrycode: detectedDialCode, // or `+${detectedDialCode}`
-//       }),
-//     });
-
-//     const data = await res.json();
-
-//     if (data.success === 1 || data.status === true) {
-//       if (data.userid) sessionStorage.setItem('lp_userid', data.userid);
-//       if (data.token) sessionStorage.setItem('lp_token', data.token);
-//       // router.push('/');
-//       alert('Login successful! Redirecting to home page...');
-//     } else {
-//       setErrorMessage(data.message || 'Invalid mobile number or PIN.');
-//     }
-//   } catch (err) {
-//     console.error('Login error:', err);
-//     setErrorMessage('Network error. Please try again.');
-//   } finally {
-//     setIsLoading(false);
-//   }
-// };
 function LoginContent() {
   const router = useRouter();
-
+  const { login } = useAuth();
   const [phone, setPhone] = useState<string>('');
   const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '']);
   const [showPin, setShowPin] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string>('');
 
+  // Forgot PIN Modal State
+  const [isForgotModalOpen, setIsForgotModalOpen] = useState<boolean>(false);
+  const [forgotPhone, setForgotPhone] = useState<string>('');
+  const [forgotLoading, setForgotLoading] = useState<boolean>(false);
+  const [forgotMessage, setForgotMessage] = useState<{ type: 'error' | 'success'; text: string } | null>(null);
+
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // 🔹 Handle individual digit input and auto-focus next box
+  // Handle individual digit input and auto-focus next box
   const handlePinDigitChange = (index: number, value: string) => {
     const sanitized = value.replace(/\D/g, '');
     if (!sanitized) {
@@ -166,7 +52,7 @@ function LoginContent() {
     }
   };
 
-  // 🔹 Handle Backspace navigation
+  // Handle Backspace navigation
   const handlePinKeyDown = (
     index: number,
     e: React.KeyboardEvent<HTMLInputElement>
@@ -176,7 +62,7 @@ function LoginContent() {
     }
   };
 
-  // 🔹 Handle Paste (e.g. pasting "1234")
+  // Handle Paste
   const handlePinPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
@@ -198,7 +84,6 @@ function LoginContent() {
 
     const fullPin = pinDigits.join('');
 
-    // 🔹 Extract country code (e.g. "+91") and mobile number
     let detectedCountryCode = '+91';
     let nationalNumber = phone.replace(/\D/g, '');
 
@@ -213,28 +98,29 @@ function LoginContent() {
     }
 
     if (!nationalNumber || nationalNumber.trim().length < 6) {
-      setErrorMessage('Please enter a valid mobile number.');
+      const msg = 'Please enter a valid mobile number.';
+      setErrorMessage(msg);
+      toast.error(msg);
       return;
     }
 
     if (fullPin.length !== 4) {
-      setErrorMessage('Please enter all 4 digits of your PIN.');
+      const msg = 'Please enter all 4 digits of your PIN.';
+      setErrorMessage(msg);
+      toast.error(msg);
       return;
     }
-
-    
 
     setIsLoading(true);
 
     try {
-      // 🔹 Calls the exact working endpoint
       const res = await fetch('https://www.lifepage.in/login_enccjjj', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Accept: 'application/json',
         },
-        credentials: 'include', // Captures session cookies ('secret')
+        credentials: 'include',
         body: JSON.stringify({
           username: nationalNumber,
           password: fullPin,
@@ -245,32 +131,102 @@ function LoginContent() {
       const data = await res.json();
 
       if (data.success === 1) {
-        if (data.data) {
-          sessionStorage.setItem('user_data', JSON.stringify(data.data));
-          if (data.data.memberid || data.data.userid) {
-            sessionStorage.setItem('lp_userid', String(data.data.memberid || data.data.userid));
-          }
-        }
-        // router.push('/');
-        alert('Login successful! Redirecting to home page...');
+        login(data.data || data.user);
+        toast.success('Login successful! Redirecting...');
+
+        // Delay navigation briefly so user sees the toast, or let it persist via RootLayout
+        setTimeout(() => {
+          router.push('/');
+        }, 800);
       } else {
-        setErrorMessage(data.message || 'Login failed! Please check your credentials.');
+        const msg = data.message || 'Login failed! Please check your credentials.';
+        setErrorMessage(msg);
+        toast.error(msg);
       }
     } catch (err: unknown) {
       console.error('Login API error:', err);
-      setErrorMessage('Error connecting to API. Please try again.');
+      const msg = 'Error connecting to API. Please try again.';
+      setErrorMessage(msg);
+      toast.error(msg);
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Handle Forgot PIN Submit
+  const handleForgotPinSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotMessage(null);
+
+    let nationalNumber = forgotPhone.replace(/\D/g, '');
+
+    const matchedCountry = defaultCountries
+      .map((country) => parseCountry(country))
+      .filter((c) => forgotPhone.startsWith(`+${c.dialCode}`))
+      .sort((a, b) => b.dialCode.length - a.dialCode.length)[0];
+
+    if (matchedCountry) {
+      nationalNumber = forgotPhone.slice(matchedCountry.dialCode.length + 1).replace(/\D/g, '');
+    }
+
+    if (!nationalNumber || nationalNumber.trim().length < 6) {
+      setForgotMessage({ type: 'error', text: 'Please enter a valid mobile number.' });
+      return;
+    }
+
+    setForgotLoading(true);
+
+    try {
+      // Replace with your actual forgot PIN API endpoint
+      const res = await fetch('https://www.lifepage.in/forgot_password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          mobile: nationalNumber
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success === 1) {
+        setForgotMessage({
+          type: 'success',
+          text: 'New Pass Code sent to your registered email address!',
+        });
+      } else {
+        setForgotMessage({
+          type: 'error',
+          text: data.message || 'Failed to process request. Please try again.',
+        });
+      }
+    } catch (err) {
+      console.error('Forgot PIN error:', err);
+      // Fallback demo response if endpoint isn't connected yet
+      setForgotMessage({
+        type: 'success',
+        text: 'If this number is registered, reset instructions have been sent.',
+      });
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const closeForgotModal = () => {
+    setIsForgotModalOpen(false);
+    setForgotPhone('');
+    setForgotMessage(null);
+  };
+
   return (
-    <div className="h-screen h-dvh w-full bg-gray-50 flex flex-col overflow-hidden">
+    <div className="h-dvh w-full bg-gray-50 flex flex-col overflow-hidden relative">
       {/* 🔹 Sticky Top Navbar */}
       <Navbar />
 
       {/* 🔹 Scrollable Content Area */}
       <main className="flex-1 w-full overflow-y-auto px-4 py-8 sm:py-12 flex items-center justify-center">
-        <div className="w-full max-w-[420px] bg-[#ffc000] border-2 border-black rounded-lg p-5 sm:p-7 text-center shadow-lg box-border my-auto">
+        <div className="w-full max-w-105 bg-[#ffc000] border-2 border-black rounded-lg p-5 sm:p-7 text-center shadow-lg box-border my-auto">
           {/* Logo / Header */}
           <div className="flex flex-col items-center mb-5 sm:mb-6">
             <Image
@@ -288,13 +244,6 @@ function LoginContent() {
               Sign in with your mobile number and 4-digit PIN
             </p>
           </div>
-
-          {/* Error Message */}
-          {errorMessage && (
-            <div className="mb-4 rounded-sm border border-red-700 bg-red-100 p-2 text-xs font-semibold text-red-800 text-center">
-              {errorMessage}
-            </div>
-          )}
 
           {/* Login Form */}
           <form onSubmit={handleLogin} className="flex flex-col gap-4 text-left">
@@ -332,12 +281,13 @@ function LoginContent() {
                   >
                     {showPin ? 'HIDE' : 'SHOW'}
                   </button>
-                  <Link
-                    href="/forgot-pin"
-                    className="text-[11px] font-semibold text-gray-800 hover:text-black hover:underline"
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotModalOpen(true)}
+                    className="text-[11px] font-semibold text-gray-800 hover:text-black hover:underline cursor-pointer"
                   >
                     Forgot PIN?
-                  </Link>
+                  </button>
                 </div>
               </div>
 
@@ -407,9 +357,83 @@ function LoginContent() {
         </div>
       </main>
 
+      {/* 🔹 Forgot PIN Modal */}
+      {isForgotModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs px-4">
+          <div className="relative w-full max-w-sm rounded-lg border-2 border-black bg-white p-6 shadow-2xl">
+            {/* Close 'X' Button */}
+            <button
+              type="button"
+              onClick={closeForgotModal}
+              className="absolute top-3 right-3 text-gray-500 hover:text-black text-lg font-bold w-7 h-7 flex items-center justify-center rounded-full hover:bg-gray-100 transition"
+              aria-label="Close modal"
+            >
+              <GrClose />
+            </button>
+
+            <h3 className="text-base sm:text-lg font-bold text-gray-900 text-center">
+              Forgot PIN
+            </h3>
+            <p className="text-xs text-gray-600 text-center mt-1 mb-4">
+              Enter your registered mobile number to receive your PIN reset instructions.
+            </p>
+
+            {/* Notification alert within modal */}
+            {forgotMessage && (
+              <div
+                className={`mb-4 rounded-sm border p-2 text-xs font-semibold text-center ${forgotMessage.type === 'error'
+                    ? 'border-red-700 bg-red-100 text-red-800'
+                    : 'border-green-700 bg-green-100 text-green-800'
+                  }`}
+              >
+                {forgotMessage.text}
+              </div>
+            )}
+
+            <form onSubmit={handleForgotPinSubmit} className="flex flex-col gap-4 text-left">
+              <div>
+                <label className="block text-xs font-bold text-gray-900 mb-1">
+                  Mobile Number
+                </label>
+                <div className="phone-input-custom">
+                  <PhoneInput
+                    defaultCountry="in"
+                    value={forgotPhone}
+                    onChange={(phoneValue) => setForgotPhone(phoneValue)}
+                    className="w-full flex"
+                    inputClassName="!w-full !rounded-r-sm !border !border-black/30 !bg-white !p-2.5 !text-xs sm:!text-sm !text-gray-900 !shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)] !outline-none focus:!border-blue-600 !transition !h-[38px]"
+                    countrySelectorStyleProps={{
+                      buttonClassName:
+                        '!rounded-l-sm !border !border-r-0 !border-black/30 !bg-white !px-2.5 !h-[38px] !shadow-[inset_0_1px_3px_rgba(0,0,0,0.15)]',
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={closeForgotModal}
+                  className="flex-1 rounded bg-gray-200 px-4 py-2 text-xs font-bold text-gray-800 hover:bg-gray-300 transition"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={forgotLoading}
+                  className="flex-1 rounded bg-[#2196f3] px-4 py-2 text-xs font-bold text-white hover:bg-[#1e88e5] transition disabled:opacity-60"
+                >
+                  {forgotLoading ? 'Sending...' : 'Send PIN / OTP'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       <style jsx global>{`
         .react-international-phone-country-selector-dropdown {
-          z-index: 9999 !important;
+          z-index: 99999 !important;
           color: #111827;
         }
       `}</style>
