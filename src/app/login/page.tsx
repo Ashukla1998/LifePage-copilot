@@ -4,14 +4,140 @@ import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { PhoneInput } from 'react-international-phone';
+// import { PhoneInput } from 'react-international-phone';
+//import 'react-international-phone/style.css';
+import {
+  PhoneInput,
+  defaultCountries,
+  parseCountry,
+} from 'react-international-phone';
 import 'react-international-phone/style.css';
 import Navbar from '../../components/Navbar';
 
+
+// function LoginContent() {
+//   const router = useRouter();
+//   // const phoneUtil = PhoneNumberUtil();
+
+// //   const [count, setCount] = useState<string>('');
+//   const [phone, setPhone] = useState<string>('');
+//   const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '']);
+//   const [showPin, setShowPin] = useState<boolean>(false);
+//   const [isLoading, setIsLoading] = useState<boolean>(false);
+//   const [errorMessage, setErrorMessage] = useState<string>('');
+
+//   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
+
+//   // 🔹 Handle individual box typing and auto-focus next
+//   const handlePinDigitChange = (index: number, value: string) => {
+//     const sanitized = value.replace(/\D/g, '');
+//     if (!sanitized) {
+//       const updated = [...pinDigits];
+//       updated[index] = '';
+//       setPinDigits(updated);
+//       return;
+//     }
+
+//     const digit = sanitized.slice(-1);
+//     const updated = [...pinDigits];
+//     updated[index] = digit;
+//     setPinDigits(updated);
+
+//     if (index < 3 && digit) {
+//       pinInputRefs.current[index + 1]?.focus();
+//     }
+//   };
+
+//   // 🔹 Handle Backspace navigation
+//   const handlePinKeyDown = (
+//     index: number,
+//     e: React.KeyboardEvent<HTMLInputElement>
+//   ) => {
+//     if (e.key === 'Backspace' && !pinDigits[index] && index > 0) {
+//       pinInputRefs.current[index - 1]?.focus();
+//     }
+//   };
+
+//   // 🔹 Handle Paste
+//   const handlePinPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+//     e.preventDefault();
+//     const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
+//     if (!pastedData) return;
+
+//     const updated = ['', '', '', ''];
+//     pastedData.split('').forEach((char, i) => {
+//       if (i < 4) updated[i] = char;
+//     });
+//     setPinDigits(updated);
+
+//     const targetFocusIndex = Math.min(pastedData.length, 3);
+//     pinInputRefs.current[targetFocusIndex]?.focus();
+//   };
+
+//   const handleLogin = async (e: React.FormEvent) => {
+//   e.preventDefault();
+//   setErrorMessage('');
+
+//   const fullPin = pinDigits.join('');
+
+//   if (!phone || phone.trim().length < 6) {
+//     setErrorMessage('Please enter a valid mobile number.');
+//     return;
+//   }
+
+//   if (fullPin.length !== 4) {
+//     setErrorMessage('Please enter all 4 digits of your PIN.');
+//     return;
+//   }
+
+//   // 🔹 Extract country code and national number
+//   let detectedDialCode = '91';
+//   let nationalNumber = phone.replace(/\D/g, '');
+
+//   // Match the longest dialCode prefix from defaultCountries
+//   const matchedCountry = defaultCountries
+//     .map((country) => parseCountry(country))
+//     .filter((c) => phone.startsWith(`+${c.dialCode}`))
+//     .sort((a, b) => b.dialCode.length - a.dialCode.length)[0];
+
+//   if (matchedCountry) {
+//     detectedDialCode = matchedCountry.dialCode; // e.g. "91"
+//     nationalNumber = phone.slice(matchedCountry.dialCode.length + 1).replace(/\D/g, ''); // phone without "+91"
+//   }
+
+//   setIsLoading(true);
+
+//   try {
+//     const res = await fetch('https://www.lifepage.in/login_enccjjj', {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify({
+//         username: nationalNumber,
+//         password: fullPin,
+//         countrycode: detectedDialCode, // or `+${detectedDialCode}`
+//       }),
+//     });
+
+//     const data = await res.json();
+
+//     if (data.success === 1 || data.status === true) {
+//       if (data.userid) sessionStorage.setItem('lp_userid', data.userid);
+//       if (data.token) sessionStorage.setItem('lp_token', data.token);
+//       // router.push('/');
+//       alert('Login successful! Redirecting to home page...');
+//     } else {
+//       setErrorMessage(data.message || 'Invalid mobile number or PIN.');
+//     }
+//   } catch (err) {
+//     console.error('Login error:', err);
+//     setErrorMessage('Network error. Please try again.');
+//   } finally {
+//     setIsLoading(false);
+//   }
+// };
 function LoginContent() {
   const router = useRouter();
 
-//   const [count, setCount] = useState<string>('');
   const [phone, setPhone] = useState<string>('');
   const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '']);
   const [showPin, setShowPin] = useState<boolean>(false);
@@ -20,26 +146,7 @@ function LoginContent() {
 
   const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // 🔹 Fetch live navbar career count
-//   useEffect(() => {
-//     const fetchNavbarData = async () => {
-//       try {
-//         const res = await fetch('https://www.lifepage.in/n/api/navbar', {
-//           method: 'GET',
-//           headers: { 'Content-Type': 'application/json' },
-//         });
-//         const json = await res.json();
-//         if (json.success === 1) {
-//           setCount(json.count);
-//         }
-//       } catch (error) {
-//         console.error('Error fetching navbar count:', error);
-//       }
-//     };
-//     fetchNavbarData();
-//   }, []);
-
-  // 🔹 Handle individual box typing and auto-focus next
+  // 🔹 Handle individual digit input and auto-focus next box
   const handlePinDigitChange = (index: number, value: string) => {
     const sanitized = value.replace(/\D/g, '');
     if (!sanitized) {
@@ -69,7 +176,7 @@ function LoginContent() {
     }
   };
 
-  // 🔹 Handle Paste
+  // 🔹 Handle Paste (e.g. pasting "1234")
   const handlePinPaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, 4);
@@ -91,7 +198,21 @@ function LoginContent() {
 
     const fullPin = pinDigits.join('');
 
-    if (!phone || phone.trim().length < 6) {
+    // 🔹 Extract country code (e.g. "+91") and mobile number
+    let detectedCountryCode = '+91';
+    let nationalNumber = phone.replace(/\D/g, '');
+
+    const matchedCountry = defaultCountries
+      .map((country) => parseCountry(country))
+      .filter((c) => phone.startsWith(`+${c.dialCode}`))
+      .sort((a, b) => b.dialCode.length - a.dialCode.length)[0];
+
+    if (matchedCountry) {
+      detectedCountryCode = `+${matchedCountry.dialCode}`;
+      nationalNumber = phone.slice(matchedCountry.dialCode.length + 1).replace(/\D/g, '');
+    }
+
+    if (!nationalNumber || nationalNumber.trim().length < 6) {
       setErrorMessage('Please enter a valid mobile number.');
       return;
     }
@@ -101,39 +222,47 @@ function LoginContent() {
       return;
     }
 
+    
+
     setIsLoading(true);
 
     try {
-      const res = await fetch('https://www.lifepage.in/n/api/login', {
+      // 🔹 Calls the exact working endpoint
+      const res = await fetch('https://www.lifepage.in/login_enccjjj', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        credentials: 'include', // Captures session cookies ('secret')
         body: JSON.stringify({
-          phone: phone.trim(),
-          pin: fullPin,
+          username: nationalNumber,
+          password: fullPin,
+          countrycode: detectedCountryCode,
         }),
       });
 
       const data = await res.json();
 
-      if (data.success === 1 || data.status === true) {
-        if (data.userid) {
-          sessionStorage.setItem('lp_userid', data.userid);
+      if (data.success === 1) {
+        if (data.data) {
+          sessionStorage.setItem('user_data', JSON.stringify(data.data));
+          if (data.data.memberid || data.data.userid) {
+            sessionStorage.setItem('lp_userid', String(data.data.memberid || data.data.userid));
+          }
         }
-        if (data.token) {
-          sessionStorage.setItem('lp_token', data.token);
-        }
-        router.push('/');
+        // router.push('/');
+        alert('Login successful! Redirecting to home page...');
       } else {
-        setErrorMessage(data.message || 'Invalid mobile number or PIN.');
+        setErrorMessage(data.message || 'Login failed! Please check your credentials.');
       }
-    } catch (err) {
-      console.error('Login error:', err);
-      setErrorMessage('Network error. Please try again.');
+    } catch (err: unknown) {
+      console.error('Login API error:', err);
+      setErrorMessage('Error connecting to API. Please try again.');
     } finally {
       setIsLoading(false);
     }
   };
-
   return (
     <div className="h-screen h-dvh w-full bg-gray-50 flex flex-col overflow-hidden">
       {/* 🔹 Sticky Top Navbar */}
