@@ -126,11 +126,13 @@ function LoginContent() {
 
             if (data.success === 1) {
                 login(data.data || data.user);
-                toast.success('Login successful! Redirecting...');
+                
                 if(data.data && data.data.memberid !== VALID_MEMBER_ID) {
                     toast.error('You are not a valid member. Please contact support.');
                     return;
                 }
+
+                toast.success('Login successful! Redirecting...');
 
                 // Delay navigation briefly so user sees the toast, or let it persist via RootLayout
                 setTimeout(() => {
