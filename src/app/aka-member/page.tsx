@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState,useEffect } from 'react';
 import Image from 'next/image';
 import { FiEdit2, FiPlus, FiSearch, FiCheck, FiSlash } from 'react-icons/fi';
 import { AkaMember, AkaMemberFormData } from './types';
@@ -39,6 +39,35 @@ export default function AkaMemberPage() {
     const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState<AkaMember | null>(null);
+    
+    useEffect(() => {
+  const fetchMembers = async () => {
+    try {
+      const response = await fetch('https://www.lifepage.in/n/api/GetAkaMember');
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      if (result?.success === 1 && result.data) {
+        if (Array.isArray(result.data)) {
+          setMembers(result.data);
+        } else {
+          setMembers([result.data]);
+        }
+      } else {
+        setMembers([]);
+      }
+    } catch (error) {
+      console.error('Error fetching members:', error);
+      setMembers([]);
+    }
+  };
+
+  fetchMembers();
+}, []);
 
     const handleYear = (year: string) => {
         const currentYear = new Date().getFullYear();
