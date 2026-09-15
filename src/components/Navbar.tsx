@@ -183,6 +183,7 @@ import Link from "next/link";
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from '../app/context/AuthContext';
 
+
 interface NavbarProps {
   careerCount?: string | number;
 }
