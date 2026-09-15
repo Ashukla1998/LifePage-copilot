@@ -24,6 +24,7 @@ export default function MemberModal({
     role: '',
     photo: '',
     degree: '',
+    category: '',
     experience: '',
     description: '',
   });
@@ -37,6 +38,7 @@ export default function MemberModal({
         role: initialData.role || '',
         photo: initialData.photo || '',
         degree: initialData.degree ? initialData.degree.join(', ') : '',
+        category: initialData.category || '',
         experience: initialData.experience || '',
         description: initialData.description || '',
       });
@@ -46,6 +48,7 @@ export default function MemberModal({
         role: '',
         photo: '',
         degree: '',
+        category: '',
         experience: '',
         description: '',
       });
@@ -77,6 +80,7 @@ export default function MemberModal({
         role: formData.role.trim(),
         photo: formData.photo.trim() || null,
         degree: degreeArray,
+        category: formData.category.trim() || null,
         experience: formData.experience.trim() || null,
         description: formData.description.trim() || null,
         is_active: initialData ? initialData.is_active : true,
@@ -169,7 +173,7 @@ export default function MemberModal({
                 disabled={loading}
                 value={formData.experience}
                 onChange={(e) => setFormData({ ...formData, experience: e.target.value })}
-                placeholder="e.g. 5+ Years"
+                placeholder="e.g. 2001"
                 className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100"
               />
             </div>
@@ -185,6 +189,20 @@ export default function MemberModal({
               value={formData.degree}
               onChange={(e) => setFormData({ ...formData, degree: e.target.value })}
               placeholder="e.g. B.Tech, MBA, Ph.D"
+              className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100"
+            />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1">
+              Category
+            </label>
+            <input
+              type="text"
+              disabled={loading}
+              value={formData.category}
+              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+              placeholder="Design Team, Maenagement Team, etc."
               className="w-full px-3.5 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-slate-100"
             />
           </div>

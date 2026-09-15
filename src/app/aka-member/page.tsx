@@ -14,7 +14,8 @@ const INITIAL_MEMBERS: AkaMember[] = [
         role: 'Lead Mentor',
         photo: 'https://placehold.co/150x150?text=AV',
         degree: ['B.Tech', 'Ph.D in AI'],
-        experience: '8+ Years',
+        category: 'Design Team',
+        experience: "2018",
         is_active: true,
         description: 'Expert in career strategy and computational technology.',
     },
@@ -24,7 +25,8 @@ const INITIAL_MEMBERS: AkaMember[] = [
         role: 'Career Consultant',
         photo: 'https://placehold.co/150x150?text=PS',
         degree: ['MBA', 'B.Com'],
-        experience: '5 Years',
+        category: 'Management Team',
+        experience: "2021",
         is_active: false,
         description: 'Specializes in higher education paths and corporate coaching.',
     },
@@ -37,6 +39,12 @@ export default function AkaMemberPage() {
     const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
     const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
     const [selectedMember, setSelectedMember] = useState<AkaMember | null>(null);
+
+    const handleYear = (year: string) => {
+        const currentYear = new Date().getFullYear();
+        const num = parseInt(year, 10);
+        return currentYear - num ;
+    };
 
     const handleOpenAdd = () => {
         setSelectedMember(null);
@@ -98,6 +106,7 @@ export default function AkaMemberPage() {
                     data.photo.trim() ||
                     `https://placehold.co/150x150?text=${data.name.charAt(0).toUpperCase()}`,
                 degree: degreesArray,
+                category: data.category,
                 experience: data.experience,
                 description: data.description,
                 is_active: true,
@@ -214,7 +223,7 @@ export default function AkaMemberPage() {
                                             {/* Role & Experience */}
                                             <td className="px-6 py-4">
                                                 <div className="text-slate-800 font-medium text-sm">{member.role}</div>
-                                                <div className="text-xs text-slate-400">{member.experience || 'N/A'}</div>
+                                                <div className="text-xs text-slate-400">{member.experience ? handleYear(member.experience) : 'N/A'} +Years</div>
                                             </td>
 
                                             {/* Degrees / Qualifications */}
