@@ -3,7 +3,7 @@ export interface AkaMember {
   name: string;
   role: string;
   photo: string;
-  degree: string[]; // TEXT[]
+  degree: string; // TEXT[]
   category: string;
   experience: string;
   is_active: boolean;
