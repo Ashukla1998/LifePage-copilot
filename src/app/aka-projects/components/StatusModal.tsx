@@ -2,69 +2,69 @@
 
 import { useState } from 'react';
 import { FiPower, FiCheckCircle, FiLoader } from 'react-icons/fi';
-import { AkaMember } from '../types';
+import { AkaProjects } from '../types';
 
 interface StatusModalProps {
   isOpen: boolean;
-  member: AkaMember | null;
+  project: AkaProjects | null;
   onClose: () => void;
-  onSuccess: (updatedMember: AkaMember) => void;
+  onSuccess: (updatedProject: AkaProjects) => void;
 }
 
 const EDIT_API_URL = 'https://www.lifepage.in/n/api/EditMember';
 
 export default function StatusModal({
   isOpen,
-  member,
+  project,
   onClose,
   onSuccess,
 }: StatusModalProps) {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  if (!isOpen || !member) return null;
+  if (!isOpen || !project) return null;
 
-  const willBeActive = !member.is_active;
+  const willBeActive = !project.is_active;
 
-  const handleConfirm = async () => {
-    setErrorMsg(null);
-    setLoading(true);
+  // const handleConfirm = async () => {
+  //   setErrorMsg(null);
+  //   setLoading(true);
 
-    try {
-      const payload = {
-        memberid: member.memberid,
-        name: member.name,
-        role: member.role,
-        photo: member.photo || null,
-        degree: member.degree || null,
-        category: member.category,
-        experience: member.experience || null,
-        description: member.description || null,
-        is_active: willBeActive,
-      };
+  //   try {
+  //     const payload = {
+  //       memberid: member.memberid,
+  //       name: member.name,
+  //       role: member.role,
+  //       photo: member.photo || null,
+  //       degree: member.degree || null,
+  //       category: member.category,
+  //       experience: member.experience || null,
+  //       description: member.description || null,
+  //       is_active: willBeActive,
+  //     };
 
-      const res = await fetch(EDIT_API_URL, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
+  //     const res = await fetch(EDIT_API_URL, {
+  //       method: 'PUT',
+  //       headers: {
+  //         'Content-Type': 'application/json',
+  //       },
+  //       body: JSON.stringify(payload),
+  //     });
 
-      const result = await res.json();
+  //     const result = await res.json();
 
-      if (res.ok && result.success === 1) {
-        onSuccess(result.data || { ...member, is_active: willBeActive });
-        onClose();
-      } else {
-        setErrorMsg(result.message || 'Failed to update member status.');
-      }
-    } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : 'Network error occurred.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  //     if (res.ok && result.success === 1) {
+  //       onSuccess(result.data || { ...member, is_active: willBeActive });
+  //       onClose();
+  //     } else {
+  //       setErrorMsg(result.message || 'Failed to update member status.');
+  //     }
+  //   } catch (err: unknown) {
+  //     setErrorMsg(err instanceof Error ? err.message : 'Network error occurred.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
@@ -78,11 +78,11 @@ export default function StatusModal({
         </div>
 
         <h3 className="text-lg font-semibold text-slate-900">
-          {willBeActive ? 'Activate Member' : 'Deactivate Member'}
+          {willBeActive ? 'Activate Project' : 'Deactivate Project'}
         </h3>
         <p className="text-sm text-slate-500 mt-2">
           Are you sure you want to {willBeActive ? 'activate' : 'deactivate'}{' '}
-          <span className="font-semibold text-slate-800">{member.name}</span>?
+          <span className="font-semibold text-slate-800">{project.title}</span>?
         </p>
 
         {errorMsg && (
@@ -103,7 +103,7 @@ export default function StatusModal({
           <button
             type="button"
             disabled={loading}
-            onClick={handleConfirm}
+            // onClick={handleConfirm}
             className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition disabled:opacity-60 ${
               willBeActive
                 ? 'bg-emerald-600 hover:bg-emerald-700'

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { FiEdit2, FiPlus, FiSearch, FiCheck, FiSlash } from 'react-icons/fi';
-import { AkaMember, AkaMemberFormData } from './types';
+import { AkaMember } from './types';
 import MemberModal from './components/MemberModal';
 import StatusModal from './components/StatusModal';
 
@@ -31,6 +31,17 @@ const INITIAL_MEMBERS: AkaMember[] = [
     description: 'Specializes in higher education paths and corporate coaching.',
   },
 ];
+
+function sanitizeDegree(degree?: string | string[]): string {
+  if (!degree) return 'N/A';
+
+  if (Array.isArray(degree)) {
+    return degree.join(', ');
+  }
+
+  const cleaned = degree.replace(/[{}\[\]\\"]/g, '').trim();
+  return cleaned || 'N/A';
+}
 
 export default function AkaMemberPage() {
   const [members, setMembers] = useState<AkaMember[]>(INITIAL_MEMBERS);
@@ -92,40 +103,27 @@ export default function AkaMemberPage() {
     setIsStatusModalOpen(true);
   };
 
+  // Called when a member is added or edited via MemberModal
   const handleMemberSuccess = (savedMember: AkaMember) => {
-    if (selectedMember) {
-      setMembers((prev) =>
-        prev.map((m) => (m.memberid === savedMember.memberid ? savedMember : m))
-      );
-    } else {
-      setMembers((prev) => [savedMember, ...prev]);
-    }
+    setMembers((prev) => {
+      const list = Array.isArray(prev) ? prev : [];
+      const exists = list.some((m) => String(m.memberid) === String(savedMember.memberid));
+      if (exists) {
+        return list.map((m) =>
+          String(m.memberid) === String(savedMember.memberid) ? savedMember : m
+        );
+      }
+      return [savedMember, ...list];
+    });
   };
 
-  function sanitizeDegree(degree?: string | string[]): string {
-    if (!degree) return 'N/A';
-
-    // 1. If it's already an array, join elements
-    if (Array.isArray(degree)) {
-        return degree.join(', ');
-    }
-
-    let cleaned = degree
-        .replace(/[{}\[\]\\"]/g, '') // removes {, }, [, ], \, "
-        .trim();
-
-    return cleaned || 'N/A';
-    }
-
-  const handleToggleStatusConfirm = () => {
-    if (!selectedMember) return;
+  // Called when status is toggled via StatusModal and PUT API succeeds
+  const handleStatusSuccess = (updatedMember: AkaMember) => {
     setMembers((prev) =>
-      prev.map((m) =>
-        m.memberid === selectedMember.memberid ? { ...m, is_active: !m.is_active } : m
+      (Array.isArray(prev) ? prev : []).map((m) =>
+        String(m.memberid) === String(updatedMember.memberid) ? updatedMember : m
       )
     );
-    setIsStatusModalOpen(false);
-    setSelectedMember(null);
   };
 
   const memberList = Array.isArray(members) ? members : [];
@@ -222,7 +220,7 @@ export default function AkaMemberPage() {
                             <div className="font-semibold text-slate-900 leading-snug">
                               {member.name}
                             </div>
-                            <div className="text-xs text-slate-400 line-clamp-1 max-w-[200px]">
+                            <div className="text-xs text-slate-400 line-clamp-1 max-w-50">
                               {member.description || 'No description provided'}
                             </div>
                           </div>
@@ -247,7 +245,7 @@ export default function AkaMemberPage() {
                       {/* Degree / Qualification */}
                       <td className="px-6 py-4">
                         <div className="text-slate-800 font-medium text-sm">
-                          {member.degree? sanitizeDegree(member.degree) : 'N/A'}
+                          {member.degree ? sanitizeDegree(member.degree) : 'N/A'}
                         </div>
                       </td>
 
@@ -273,7 +271,7 @@ export default function AkaMemberPage() {
                       <td className="px-6 py-4 text-right">
                         <div className="inline-flex items-center gap-1">
                           <button
-                            // onClick={() => handleOpenEdit(member)}
+                            onClick={() => handleOpenEdit(member)}
                             className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                             title="Edit Member"
                           >
@@ -281,7 +279,7 @@ export default function AkaMemberPage() {
                           </button>
 
                           <button
-                            // onClick={() => handleOpenStatusModal(member)}
+                            onClick={() => handleOpenStatusModal(member)}
                             title={member.is_active ? 'Deactivate Member' : 'Activate Member'}
                             className={`p-2 rounded-lg transition-colors ${
                               member.is_active
@@ -319,12 +317,12 @@ export default function AkaMemberPage() {
         onSuccess={handleMemberSuccess}
       />
 
-      {/* <StatusModal
+      <StatusModal
         isOpen={isStatusModalOpen}
         member={selectedMember}
         onClose={() => setIsStatusModalOpen(false)}
-        onConfirm={handleToggleStatusConfirm}
-      /> */}
+        onSuccess={handleStatusSuccess}
+      />
     </main>
   );
 }
