@@ -11,7 +11,7 @@ interface StatusModalProps {
   onSuccess: (updatedProject: AkaProjects) => void;
 }
 
-const EDIT_API_URL = 'https://www.lifepage.in/n/api/EditMember';
+const EDIT_API_URL = 'https://www.lifepage.in/n/api/EditProject';
 
 export default function StatusModal({
   isOpen,

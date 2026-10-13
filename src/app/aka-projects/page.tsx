@@ -3,42 +3,10 @@
 // import { useState, useEffect } from 'react';
 // import Image from 'next/image';
 // import { FiEdit2, FiPlus, FiSearch, FiCheck, FiSlash } from 'react-icons/fi';
-// import { AkaProjects, AkaProjectsFormData } from './types';
+// import { AkaProjects } from './types';
 // import AddProjectModal, { AkaProjectsPayload } from './components/AddProject';
 // import EditProjectModal, { AkaProjectsEditFormData } from './components/EditProjectModal';
 // import StatusModal from './components/StatusModal';
-// // import { toast } from 'react-toastify';
-
-// const INITIAL_Projects: AkaProjects[] = [
-//   {
-//     projectid: 1,
-//     title: "GEIMS HOSPITAL",
-//     description: "A state-of-the-art medical facility designed with patient-centric care.",
-//     location: "Dhulkot, Dehradun",
-//     size: "20 acres",
-//     buildup: "12,00,000 sq.ft.",
-//     service: "Elevation | Interior | Landscape",
-//     status: "100% completed",
-//     gallerypath: "/images/projects/Healthcare/GEIMSHospital/",
-//     is_active: true,
-//     category: "Healthcare",
-//     cover: "./game.png"
-//   },
-//   {
-//     projectid: 2,
-//     title: "GEIMS SERVICE BLOCK",
-//     category: "Healthcare",
-//     location: "Dhulkot, Dehradun",
-//     gallerypath: "/images/projects/Healthcare/GEIMSHospital/",
-//     size: "20 acres",
-//     buildup: "3,85,000 sq.ft.",
-//     description: "GEIMS Service Block will complement the main Hospital building with non medical services.",
-//     status: "100% completed",
-//     service: "Architecture | Interior | Landscape",
-//     is_active: true,
-//     cover: "./icon.png"
-//   },
-// ];
 
 // export default function AkaProjectsPage() {
 //   const [projects, setprojects] = useState<AkaProjects[]>([]);
@@ -48,63 +16,7 @@
 //   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 //   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
 
-//   // Open Edit Modal
-//   const handleOpenEdit = (project: AkaProjects) => {
-//     setSelectedProject(project);
-//     setIsEditModalOpen(true);
-//   };
-
-//   // Submit Edit Project
-//   const handleEditProject = async (projectid: number, formData: AkaProjectsEditFormData) => {
-//     setprojects((prev) =>
-//       prev.map((item) => {
-//         if (item.projectid === projectid) {
-//           return {
-//             ...item,
-//             ...formData,
-//             // Retain original cover if no new file is uploaded
-//             cover: formData.cover ? URL.createObjectURL(formData.cover) : item.cover,
-//           };
-//         }
-//         return item;
-//       })
-//     );
-//   };
-
-//   const handleOpenStatusModal = (project: AkaProjects) => {
-//     setSelectedProject(project);
-//     setIsStatusModalOpen(true);
-//   }
-
-
-//   // Re-fetch when a project is added or edited
-
-//   // Inside AkaProjectsPage:
-//   const handleAddProject = async (payload: AkaProjectsPayload) => {
-//     try {
-//       const res = await fetch('https://www.lifepage.in/n/api/AkaProject', { // Replace with your backend route
-//         method: 'POST',
-//         headers: {
-//           'Content-Type': 'application/json',
-//         },
-//         body: JSON.stringify(payload),
-//       });
-
-//       const result = await res.json();
-
-//       if (result.success === 1 && result.data) {
-//         // result.data contains the Postgres row, where 'cover' is the public GCS URL
-//         setprojects((prev) => [result.data, ...prev]);
-//         // toast.success('Project added successfully!');
-//         setIsAddModalOpen(false);
-//       } else {
-//         alert(result.message || 'Failed to create project');
-//       }
-//     } catch (err) {
-//       console.error('Error adding project:', err);
-//     }
-//   };
-
+//   // Fetch initial project list
 //   useEffect(() => {
 //     const fetchprojects = async () => {
 //       try {
@@ -117,11 +29,7 @@
 //         const result = await response.json();
 
 //         if (result?.success === 1 && result.data) {
-//           if (Array.isArray(result.data)) {
-//             setprojects(result.data);
-//           } else {
-//             setprojects([result.data]);
-//           }
+//           setprojects(Array.isArray(result.data) ? result.data : [result.data]);
 //         } else {
 //           setprojects([]);
 //         }
@@ -132,9 +40,78 @@
 //     };
 
 //     fetchprojects();
-//   }, [handleAddProject, handleEditProject]);
+//   }, []); // Run once on mount
 
+//   // Add project handler
+//   const handleAddProject = async (payload: AkaProjectsPayload) => {
+//     try {
+//       const res = await fetch('https://www.lifepage.in/n/api/AkaProject', {
+//         method: 'POST',
+//         headers: {
+//           'Content-Type': 'application/json',
+//         },
+//         body: JSON.stringify(payload),
+//       });
 
+//       const result = await res.json();
+
+//       if (result.success === 1 && result.data) {
+//         setprojects((prev) => [result.data, ...prev]);
+//         setIsAddModalOpen(false);
+//       } else {
+//         alert(result.message || 'Failed to create project');
+//       }
+//     } catch (err) {
+//       console.error('Error adding project:', err);
+//     }
+//   };
+
+//   // Open Edit Modal
+//   const handleOpenEdit = (project: AkaProjects) => {
+//     setSelectedProject(project);
+//     setIsEditModalOpen(true);
+//   };
+
+//   // Submit Edit Project
+//   const handleEditProject = async (projectid: number, formData: AkaProjectsEditFormData) => {
+//     try {
+//       // If you have an edit API, call it here:
+//       // const res = await fetch('https://www.lifepage.in/n/api/EditProject', {
+//       //   method: 'PUT',
+//       //   headers: { 'Content-Type': 'application/json' },
+//       //   body: JSON.stringify({ projectid, ...formData }),
+//       // });
+//       // const result = await res.json();
+
+//       setprojects((prev) =>
+//         prev.map((item) => {
+//           if (item.projectid === projectid) {
+//             return {
+//               ...item,
+//               ...formData,
+//               cover: formData.cover ? URL.createObjectURL(formData.cover) : item.cover,
+//             };
+//           }
+//           return item;
+//         })
+//       );
+//       setIsEditModalOpen(false);
+//     } catch (err) {
+//       console.error('Error updating project:', err);
+//     }
+//   };
+
+//   // Open Status Modal
+//   const handleOpenStatusModal = (project: AkaProjects) => {
+//     setSelectedProject(project);
+//     setIsStatusModalOpen(true);
+//   };
+
+//   const handleStatusSuccess = (updatedProject: AkaProjects) => {
+//     setprojects((prev) =>
+//       prev.map((p) => (String(p.projectid) === String(updatedProject.projectid) ? updatedProject : p))
+//     );
+//   };
 
 //   const ProjectList = Array.isArray(projects) ? projects : [];
 //   const filteredprojects = ProjectList.filter(
@@ -143,14 +120,6 @@
 //       m.category?.toLowerCase().includes(search.toLowerCase()) ||
 //       m.description?.toLowerCase().includes(search.toLowerCase())
 //   );
-
-//   const handleStatusSuccess = (updatedProject: AkaProjects) => {
-//     setprojects((prev) =>
-//       (Array.isArray(prev) ? prev : []).map((p) =>
-//         String(p.projectid) === String(updatedProject.projectid) ? updatedProject : p
-//       )
-//     );
-//   };
 
 //   return (
 //     <main className="min-h-screen bg-slate-50/60 py-10 px-4 sm:px-6 lg:px-8">
@@ -251,22 +220,19 @@
 //                         </span>
 //                       </td>
 
-//                       {/* Role & Experience */}
+//                       {/* Size */}
 //                       <td className="px-6 py-4">
 //                         <div className="text-slate-800 font-medium text-sm">{project.size || 'N/A'}</div>
-//                         {/* <div className="text-xs text-slate-400">
-//                           {project.size || 'N/A'}
-//                         </div> */}
 //                       </td>
 
-//                       {/* Degree / Qualification */}
+//                       {/* Buildup */}
 //                       <td className="px-6 py-4">
 //                         <div className="text-slate-800 font-medium text-sm">
 //                           {project.buildup || 'N/A'}
 //                         </div>
 //                       </td>
 
-//                       {/* service */}
+//                       {/* Services */}
 //                       <td className="px-6 py-4">
 //                         <div className="text-slate-800 font-medium text-sm">
 //                           {project.service || 'N/A'}
@@ -276,14 +242,16 @@
 //                       {/* Status */}
 //                       <td className="px-6 py-4">
 //                         <span
-//                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${project.is_active
+//                           className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+//                             project.is_active
 //                               ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
 //                               : 'bg-rose-50 text-rose-700 border border-rose-200/60'
-//                             }`}
+//                           }`}
 //                         >
 //                           <span
-//                             className={`w-1.5 h-1.5 rounded-full ${project.is_active ? 'bg-emerald-500' : 'bg-rose-500'
-//                               }`}
+//                             className={`w-1.5 h-1.5 rounded-full ${
+//                               project.is_active ? 'bg-emerald-500' : 'bg-rose-500'
+//                             }`}
 //                           />
 //                           {project.is_active ? 'Active' : 'Inactive'}
 //                         </span>
@@ -292,7 +260,6 @@
 //                       {/* Actions */}
 //                       <td className="px-6 py-4 text-right">
 //                         <div className="inline-flex items-center gap-1">
-
 //                           <button
 //                             onClick={() => handleOpenEdit(project)}
 //                             className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -304,10 +271,11 @@
 //                           <button
 //                             onClick={() => handleOpenStatusModal(project)}
 //                             title={project.is_active ? 'Deactivate project' : 'Activate project'}
-//                             className={`p-2 rounded-lg transition-colors ${project.is_active
+//                             className={`p-2 rounded-lg transition-colors ${
+//                               project.is_active
 //                                 ? 'text-slate-500 hover:text-amber-600 hover:bg-amber-50'
 //                                 : 'text-slate-500 hover:text-emerald-600 hover:bg-emerald-50'
-//                               }`}
+//                             }`}
 //                           >
 //                             {project.is_active ? (
 //                               <FiSlash className="w-4 h-4" />
@@ -321,7 +289,7 @@
 //                   ))
 //                 ) : (
 //                   <tr>
-//                     <td colSpan={6} className="px-6 py-12 text-center text-sm text-slate-400">
+//                     <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
 //                       No projects found matching &quot;{search}&quot;.
 //                     </td>
 //                   </tr>
@@ -367,6 +335,16 @@ import { AkaProjects } from './types';
 import AddProjectModal, { AkaProjectsPayload } from './components/AddProject';
 import EditProjectModal, { AkaProjectsEditFormData } from './components/EditProjectModal';
 import StatusModal from './components/StatusModal';
+
+// Helper to convert File to base64
+const fileToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
 
 export default function AkaProjectsPage() {
   const [projects, setprojects] = useState<AkaProjects[]>([]);
@@ -428,6 +406,7 @@ export default function AkaProjectsPage() {
 
   // Open Edit Modal
   const handleOpenEdit = (project: AkaProjects) => {
+    // console.log('Opening edit modal for project:', project);
     setSelectedProject(project);
     setIsEditModalOpen(true);
   };
@@ -435,27 +414,57 @@ export default function AkaProjectsPage() {
   // Submit Edit Project
   const handleEditProject = async (projectid: number, formData: AkaProjectsEditFormData) => {
     try {
-      // If you have an edit API, call it here:
-      // const res = await fetch('https://www.lifepage.in/n/api/EditProject', {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ projectid, ...formData }),
-      // });
-      // const result = await res.json();
+      let base64Cover: string | null = null;
+      if (formData.cover instanceof File) {
+        base64Cover = await fileToBase64(formData.cover);
+      }
 
-      setprojects((prev) =>
-        prev.map((item) => {
-          if (item.projectid === projectid) {
-            return {
-              ...item,
-              ...formData,
-              cover: formData.cover ? URL.createObjectURL(formData.cover) : item.cover,
-            };
-          }
-          return item;
-        })
+      const processedGalleryImages = await Promise.all(
+        (formData.project_images || [])
+          .filter((img) => img.file instanceof File)
+          .map(async (img) => ({
+            file: await fileToBase64(img.file as File),
+            order_no: Number(img.order_no) || 1,
+            description: img.description || '',
+          }))
       );
-      setIsEditModalOpen(false);
+
+      const payload = {
+        projectid,
+        title: formData.title,
+        description: formData.description,
+        location: formData.location,
+        size: formData.size,
+        buildup: formData.buildup,
+        service: formData.service,
+        status: formData.status,
+        gallerypath: formData.gallerypath,
+        category: formData.category,
+        is_active: formData.is_active,
+        cover: base64Cover,
+        new_images: processedGalleryImages,
+      };
+
+      const res = await fetch('https://www.lifepage.in/n/api/EditProject', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await res.json();
+
+      if (result.success === 1 && result.data) {
+        const updated = result.data;
+        setprojects((prev) =>
+          prev.map((item) => (item.projectid === projectid ? { ...item, ...updated } : item))
+        );
+        setIsEditModalOpen(false);
+        setSelectedProject(null);
+      } else {
+        alert(result.message || 'Failed to update project');
+      }
     } catch (err) {
       console.error('Error updating project:', err);
     }

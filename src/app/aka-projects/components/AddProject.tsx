@@ -15,6 +15,8 @@ export interface AkaProjectsPayload {
   category: string;
   is_active: boolean;
   cover: string | null; // Base64 data url or null
+  start_year: string | null;
+  end_year: string | null;
 }
 
 interface AddProjectModalProps {
@@ -35,6 +37,8 @@ interface FormState {
   category: string;
   is_active: boolean;
   coverFile: File | null;
+  start_year: string ;
+  end_year: string ;
 }
 
 const INITIAL_STATE: FormState = {
@@ -49,6 +53,8 @@ const INITIAL_STATE: FormState = {
   category: '',
   is_active: true,
   coverFile: null,
+  start_year: '',
+  end_year: '',
 };
 
 export default function AddProjectModal({
@@ -130,6 +136,8 @@ export default function AddProjectModal({
         category: formData.category,
         is_active: formData.is_active,
         cover: base64Cover,
+        start_year: formData.start_year,
+        end_year: formData.end_year // Placeholder, adjust as needed
       });
 
       onClose();
@@ -266,6 +274,38 @@ export default function AddProjectModal({
                   value={formData.buildup}
                   onChange={handleChange}
                   placeholder="e.g. 12,00,000 sq.ft."
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  Start Year <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  required
+                  type="text"
+                  name="start_year"
+                  value={formData.start_year}
+                  onChange={handleChange}
+                  placeholder="e.g. 2020"
+                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1">
+                  End Year <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  required
+                  type="text"
+                  name="end_year"
+                  value={formData.end_year}
+                  onChange={handleChange}
+                  placeholder="e.g. 2023"
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                 />
               </div>

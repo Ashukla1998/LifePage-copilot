@@ -1,3 +1,5 @@
+import { AkaProjectImageInput } from "./components/EditProjectModal";
+
 export interface AkaProjects {
   projectid: number;
   title: string;
@@ -11,6 +13,9 @@ export interface AkaProjects {
   category: string;
   is_active: boolean;
   cover: string;
+  project_images: AkaProjectImageInput[];
+  start_year: string;
+  end_year: string;
 }
 
 export interface AkaProjectsFormData {
