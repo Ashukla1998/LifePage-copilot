@@ -438,6 +438,8 @@ export default function AkaProjectsPage() {
         buildup: formData.buildup,
         service: formData.service,
         status: formData.status,
+        start_year: formData.start_year,
+        end_year: formData.end_year,
         gallerypath: formData.gallerypath,
         category: formData.category,
         is_active: formData.is_active,
@@ -543,6 +545,8 @@ export default function AkaProjectsPage() {
                   <th scope="col" className="px-6 py-3.5">Size</th>
                   <th scope="col" className="px-6 py-3.5">Buildup</th>
                   <th scope="col" className="px-6 py-3.5">Services</th>
+                  <th scope="col" className="px-6 py-3.5">Start Year</th>
+                  <th scope="col" className="px-6 py-3.5">End Year</th>
                   <th scope="col" className="px-6 py-3.5">Status</th>
                   <th scope="col" className="px-6 py-3.5 text-right">Actions</th>
                 </tr>
@@ -605,6 +609,20 @@ export default function AkaProjectsPage() {
                       <td className="px-6 py-4">
                         <div className="text-slate-800 font-medium text-sm">
                           {project.service || 'N/A'}
+                        </div>
+                      </td>
+
+                      {/* Start Year */}
+                      <td className="px-6 py-4">
+                        <div className="text-slate-800 font-medium text-sm">
+                          {project.start_year || 'N/A'}
+                        </div>
+                      </td>
+
+                      {/* End Year */}
+                      <td className="px-6 py-4">
+                        <div className="text-slate-800 font-medium text-sm">
+                          {project.end_year || 'N/A'}
                         </div>
                       </td>
 
