@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { FiX, FiCheck, FiLoader, FiPlus, FiTrash2, FiImage } from 'react-icons/fi';
 import { AkaProjects } from '../types';
 
@@ -96,19 +96,22 @@ export default function EditProjectModal({
     }
   }, [isOpen, project]);
   
-  // Clean up blob URLs when component unmounts or preview URLs change
+  // Clean up blob URLs on unmount (replaced/removed ones are revoked in their handlers)
+  const blobUrlsRef = useRef({ previewUrl, images: formData.project_images });
+  blobUrlsRef.current = { previewUrl, images: formData.project_images };
   useEffect(() => {
     return () => {
+      const { previewUrl, images } = blobUrlsRef.current;
       if (previewUrl && previewUrl.startsWith('blob:')) {
         URL.revokeObjectURL(previewUrl);
       }
-      formData.project_images.forEach((img) => {
+      images.forEach((img) => {
         if (img.previewUrl && img.previewUrl.startsWith('blob:')) {
           URL.revokeObjectURL(img.previewUrl);
         }
       });
     };
-  }, [previewUrl, formData.project_images]);
+  }, []);
 
   if (!isOpen || !project) return null;
 
@@ -486,9 +489,9 @@ export default function EditProjectModal({
                       <div className="flex items-start gap-3">
                         {/* Thumbnail preview */}
                         <div className="w-12 h-12 rounded-lg border border-slate-200 bg-white shrink-0 overflow-hidden flex items-center justify-center">
-                          {imgItem.image_location ? (
+                          {imgItem.previewUrl || imgItem.image_location ? (
                             <img
-                              src={imgItem.image_location}
+                              src={imgItem.previewUrl || imgItem.image_location}
                               alt="Gallery Preview"
                               className="w-full h-full object-cover"
                             />
@@ -504,7 +507,7 @@ export default function EditProjectModal({
                               Image File <span className="text-rose-500">*</span>
                             </label>
                             <input
-                              required
+                              required={!imgItem.image_location}
                               type="file"
                               accept="image/*"
                               onChange={(e) =>
@@ -512,6 +515,11 @@ export default function EditProjectModal({
                               }
                               className="w-full text-xs text-slate-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[11px] file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer bg-white border border-slate-200 rounded-lg p-1"
                             />
+                            {imgItem.image_location && !imgItem.file && (
+                              <p className="mt-1 text-[11px] text-slate-400 truncate" title={imgItem.image_location}>
+                                Current: {imgItem.image_location.split('/').pop()}
+                              </p>
+                            )}
                           </div>
 
                           <div>
