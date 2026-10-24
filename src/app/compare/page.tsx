@@ -16,6 +16,8 @@ interface Session {
   thumbfile?: string;
   avatar?: string;
   fieldOfStudy?: string;
+  division?: string;
+  subdivision?: string;
 }
 
 interface CareerData {
@@ -44,6 +46,7 @@ function CompareCareersContent() {
   const excludeList = useRef<string[]>([]);
   const lastSelected = useRef<'left' | 'right' | null>(null);
   const usedQuestionsMap = useRef<Record<string, Set<string>>>({});
+  const excludedTopics = useRef<string[]>([]);
 
   // 🔹 FETCH NAVBAR COUNT
   useEffect(() => {
@@ -140,71 +143,151 @@ function CompareCareersContent() {
   };
 
   // 🔹 GET NEXT RELEVANT CAREER
+  // const getNextCareer = async (baseCareer: CareerData): Promise<CareerData | null> => {
+  //   const sessionId = baseCareer.session.sessionid;
+  //   if (!usedQuestionsMap.current[sessionId]) {
+  //     usedQuestionsMap.current[sessionId] = new Set<string>();
+  //   }
+  //   const usedSet = usedQuestionsMap.current[sessionId];
+  //   const dynamicExclude = [
+  //     ...excludeList.current,
+  //     leftCareer?.session.sessionid,
+  //     rightCareer?.session.sessionid,
+  //   ].filter((id): id is string => !!id);
+
+  //   const filterAndSort = (cat: string) =>
+  //     baseCareer.questions
+  //       .filter((q) => q.que_category === cat)
+  //       .sort((a, b) => b.percentage - a.percentage);
+
+  //   const matchCategories = ['Skills', 'Education', 'Positives', 'Challenges'];
+
+  //   for (const category of matchCategories) {
+  //     const questions = filterAndSort(category);
+  //     for (const item of questions) {
+  //       if (usedSet.has(item.question)) continue;
+
+  //       const res = await fetch('https://www.lifepage.in/n/api/getCareerByQuestion', {
+  //         method: 'POST',
+  //         headers: { 'Content-Type': 'application/json' },
+  //         body: JSON.stringify({
+  //           question: item.question,
+  //           percentage: item.percentage,
+  //           exclude: [...new Set(dynamicExclude)],
+  //           names: [baseCareer.session.topic],
+  //         }),
+  //       });
+
+  //       const data = await res.json();
+  //       usedSet.add(item.question);
+  //       if (data.data && data.data.length > 0) {
+  //         const newCareer: CareerData = data.data[0];
+  //         excludeList.current.push(newCareer.session.sessionid);
+  //         return newCareer;
+  //       }
+  //     }
+  //   }
+
+  //   try {
+  //     const res = await fetch('https://www.lifepage.in/n/api/randomCareer', {
+  //       method: 'POST',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({
+  //         exclude: [...new Set(dynamicExclude)],
+  //         names: [baseCareer.session.topic],
+  //       }),
+  //     });
+  //     const data = await res.json();
+  //     if (data.data && data.data.length > 0) {
+  //       const newCareer: CareerData = data.data[0];
+  //       excludeList.current.push(newCareer.session.sessionid);
+  //       return newCareer;
+  //     }
+  //   } catch (err) {
+  //     console.error('Random API failed:', err);
+  //   }
+  //   return null;
+  // };
   const getNextCareer = async (baseCareer: CareerData): Promise<CareerData | null> => {
-    const sessionId = baseCareer.session.sessionid;
-    if (!usedQuestionsMap.current[sessionId]) {
-      usedQuestionsMap.current[sessionId] = new Set<string>();
-    }
-    const usedSet = usedQuestionsMap.current[sessionId];
-    const dynamicExclude = [
-      ...excludeList.current,
-      leftCareer?.session.sessionid,
-      rightCareer?.session.sessionid,
-    ].filter((id): id is string => !!id);
-
-    const filterAndSort = (cat: string) =>
+    // Extract category arrays with threshold >= 3%
+    const getCategoryQuestions = (cat: string) =>
       baseCareer.questions
-        .filter((q) => q.que_category === cat)
-        .sort((a, b) => b.percentage - a.percentage);
+        .filter((q) => q.que_category === cat && q.percentage >= 3)
+        .map((q) => q.question);
 
-    const matchCategories = ['Skills', 'Education', 'Positives', 'Challenges'];
+    const skills = getCategoryQuestions('Skills');
+    const education = getCategoryQuestions('Education');
+    const positives = getCategoryQuestions('Positives');
+    const challenges = getCategoryQuestions('Challenges');
 
-    for (const category of matchCategories) {
-      const questions = filterAndSort(category);
-      for (const item of questions) {
-        if (usedSet.has(item.question)) continue;
+    const dynamicExclude = Array.from(
+      new Set([
+        ...excludeList.current,
+        leftCareer?.session.sessionid,
+        rightCareer?.session.sessionid,
+      ].filter((id): id is string => !!id))
+    );
 
-        const res = await fetch('https://www.lifepage.in/n/api/getCareerByQuestion', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            question: item.question,
-            percentage: item.percentage,
-            exclude: [...new Set(dynamicExclude)],
-            names: [baseCareer.session.topic],
-          }),
-        });
-
-        const data = await res.json();
-        usedSet.add(item.question);
-        if (data.data && data.data.length > 0) {
-          const newCareer: CareerData = data.data[0];
-          excludeList.current.push(newCareer.session.sessionid);
-          return newCareer;
-        }
-      }
-    }
+    const dynamicTopicExclude = Array.from(
+      new Set([
+        ...excludedTopics.current,
+        leftCareer?.session.topic,
+        rightCareer?.session.topic,
+      ].filter((t): t is string => !!t))
+    );
 
     try {
-      const res = await fetch('https://www.lifepage.in/n/api/randomCareer', {
+      const res = await fetch('https://www.lifepage.in/n/api/getCareerByQuestion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          exclude: [...new Set(dynamicExclude)],
-          names: [baseCareer.session.topic],
+          base_sessionid: baseCareer.session.sessionid,
+          division: baseCareer.session.division,
+          subdivision: baseCareer.session.subdivision,
+          skills,
+          education,
+          positives,
+          challenges,
+          exclude: dynamicExclude,
+          names: dynamicTopicExclude,
         }),
       });
+
       const data = await res.json();
-      if (data.data && data.data.length > 0) {
-        const newCareer: CareerData = data.data[0];
-        excludeList.current.push(newCareer.session.sessionid);
-        return newCareer;
+      if (data?.success && data?.data && data.data.length > 0) {
+        const nextMatch: CareerData = data.data[0];
+        excludeList.current.push(nextMatch.session.sessionid);
+        excludedTopics.current.push(nextMatch.session.topic);
+        return nextMatch;
       }
     } catch (err) {
-      console.error('Random API failed:', err);
+      console.error('Category priority search error:', err);
     }
+
+    // Fallback: If tag search yields nothing, pull an unseen random career
+    try {
+      const fallbackRes = await fetch('https://www.lifepage.in/n/api/randomCareer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          exclude: dynamicExclude,
+          names: dynamicTopicExclude,
+        }),
+      });
+      const fallbackData = await fallbackRes.json();
+      if (fallbackData?.success && fallbackData?.data && fallbackData.data.length > 0) {
+        const randomMatch: CareerData = fallbackData.data[0];
+        excludeList.current.push(randomMatch.session.sessionid);
+        excludedTopics.current.push(randomMatch.session.topic);
+        return randomMatch;
+      }
+    } catch (err) {
+      console.error('Random fallback failed:', err);
+    }
+
     return null;
   };
+
 
   // 🔹 CLICK INTERACTION HANDLERS
   const selectLeft = async () => {
