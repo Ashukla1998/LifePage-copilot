@@ -75,6 +75,15 @@ export default function CareerDuelView({
   onOpenCareer,
   onNone,
 }: CareerDuelViewProps) {
+  // The card columns act as buttons (they contain the Learn More button, so they can't be <button>s)
+  const onCardKeyDown = (e: React.KeyboardEvent<HTMLDivElement>, select: () => void) => {
+    if (e.target !== e.currentTarget) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      select();
+    }
+  };
+
   // 🔹 PROGRESS HUD
   const renderLearnMore = (count: number, career: CareerData | null, isVisible: boolean) => {
     if (!isVisible || !career || count === 0) {
@@ -240,7 +249,15 @@ export default function CareerDuelView({
           {/* Duel */}
           <div className="mt-8 grid w-full grid-cols-1 items-start gap-4 md:grid-cols-[1fr_auto_1fr] md:gap-6">
             {/* LEFT COLUMN */}
-            <div className="group/col mx-auto flex w-full max-w-[440px] cursor-pointer flex-col gap-2" onClick={onSelectLeft}>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-pressed={selectedSide === 'left'}
+              aria-label={leftCareer ? `Choose ${leftCareer.session.topic}` : 'Loading career'}
+              className="group/col mx-auto flex w-full max-w-[440px] cursor-pointer flex-col gap-2 rounded-2xl outline-none focus-visible:ring-4 focus-visible:ring-[#C9822B]/40"
+              onClick={onSelectLeft}
+              onKeyDown={(e) => onCardKeyDown(e, onSelectLeft)}
+            >
               {renderCardContent(leftCareer, selectedSide === 'left')}
               {renderLearnMore(leftClickCount, leftCareer, selectedSide === 'left')}
             </div>
@@ -255,7 +272,15 @@ export default function CareerDuelView({
             </div>
 
             {/* RIGHT COLUMN */}
-            <div className="group/col mx-auto flex w-full max-w-[440px] cursor-pointer flex-col gap-2" onClick={onSelectRight}>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-pressed={selectedSide === 'right'}
+              aria-label={rightCareer ? `Choose ${rightCareer.session.topic}` : 'Loading career'}
+              className="group/col mx-auto flex w-full max-w-[440px] cursor-pointer flex-col gap-2 rounded-2xl outline-none focus-visible:ring-4 focus-visible:ring-[#C9822B]/40"
+              onClick={onSelectRight}
+              onKeyDown={(e) => onCardKeyDown(e, onSelectRight)}
+            >
               {renderCardContent(rightCareer, selectedSide === 'right')}
               {renderLearnMore(rightClickCount, rightCareer, selectedSide === 'right')}
             </div>

@@ -6,7 +6,7 @@ import { ChevronRight, Sparkles } from "lucide-react";
 import Navbar from "../components/Navbar";
 import HomeFormBox from "../components/HomeFormBox";
 import TrendingMarquee, { type TrendingCareer } from "../components/TrendingMarquee";
-import { API_BASE } from "@/lib/api";
+import { getNavbarData } from "@/lib/navbarData";
 import { jakarta } from "@/lib/fonts";
 
 // Fades the side images into the page background on every edge except the outer one
@@ -27,30 +27,24 @@ export default function Home() {
   const [careers, setCareers] = useState<TrendingCareer[]>([]);
 
   useEffect(() => {
-    const fetchCareerCount = async () => {
-      try {
-        const res = await fetch(`${API_BASE}/navbar`, {
-          method: "GET",
-          headers: { "Content-Type": "application/json" },
+    let cancelled = false;
+    getNavbarData()
+      .then(({ count, topics }) => {
+        if (cancelled) return;
+        setCount(count);
+        // API can return the same topic more than once
+        const unique = new Map<string, TrendingCareer>();
+        topics.forEach((item) => {
+          const topic = item.topic.trim();
+          if (!unique.has(topic)) unique.set(topic, { topic, thumbfile: item.thumbfile });
         });
-        const json = await res.json();
+        setCareers(Array.from(unique.values()));
+      })
+      .catch((error) => console.error("Error fetching career data:", error));
 
-        if (json.success === 1) {
-          setCount(json.count);
-          // API can return the same topic more than once
-          const unique = new Map<string, TrendingCareer>();
-          json.data.forEach((item: TrendingCareer) => {
-            const topic = item.topic.trim();
-            if (!unique.has(topic)) unique.set(topic, { topic, thumbfile: item.thumbfile });
-          });
-          setCareers(Array.from(unique.values()));
-        }
-      } catch (error) {
-        console.error("Error fetching career data:", error);
-      }
+    return () => {
+      cancelled = true;
     };
-
-    fetchCareerCount();
   }, []);
 
   const handleCareerSelect = (selectedCareer: string) => {

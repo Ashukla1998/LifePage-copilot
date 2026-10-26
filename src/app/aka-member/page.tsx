@@ -311,12 +311,16 @@ export default function AkaMemberPage() {
         </div>
       </div>
 
-      <MemberModal
-        isOpen={isMemberModalOpen}
-        initialData={selectedMember}
-        onClose={() => setIsMemberModalOpen(false)}
-        onSuccess={handleMemberSuccess}
-      />
+      {/* Mounted only while open (keyed per member) so the form starts fresh each time */}
+      {isMemberModalOpen && (
+        <MemberModal
+          key={selectedMember?.memberid ?? 'new'}
+          isOpen
+          initialData={selectedMember}
+          onClose={() => setIsMemberModalOpen(false)}
+          onSuccess={handleMemberSuccess}
+        />
+      )}
 
       <StatusModal
         isOpen={isStatusModalOpen}

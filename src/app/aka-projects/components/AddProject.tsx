@@ -66,17 +66,8 @@ export default function AddProjectModal({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  useEffect(() => {
-    if (isOpen) {
-      setFormData(INITIAL_STATE);
-      setPreviewUrl(null);
-    } else {
-      if (previewUrl) URL.revokeObjectURL(previewUrl);
-      setPreviewUrl(null);
-      setFormData(INITIAL_STATE);
-    }
-  }, [isOpen]);
-
+  // The page mounts this modal fresh each time it opens, so the form always starts empty;
+  // the effect below revokes the preview blob URL when it changes or the modal unmounts
   useEffect(() => {
     return () => {
       if (previewUrl) URL.revokeObjectURL(previewUrl);

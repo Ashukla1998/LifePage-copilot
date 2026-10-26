@@ -7,9 +7,10 @@ const BASE_URL = (process.env.BASE_URL ?? "http://localhost:3000").replace(/\/$/
 const checks = [
   { path: "/", status: 200, includes: "Find the" },
   { path: "/career-duels", status: 200, includes: "<title>Career Duels | LifePage</title>" },
-  { path: "/compare?career=Doctor", status: 200, includes: "<title>Compare Careers | LifePage</title>" },
-  { path: "/advisor-list?career=Cardiology", status: 200, includes: "<title>Choose an Advisor | LifePage</title>" },
-  { path: "/articles?profileid=20170603-0003", status: 200, includes: "<title>Career Deep Dive | LifePage</title>" },
+  { path: "/compare?career=Doctor", status: 200, includes: "<title>Compare Doctor with Other Careers | LifePage</title>" },
+  { path: "/advisor-list?career=Cardiology", status: 200, includes: "<title>Cardiology Advisors | LifePage</title>" },
+  // Advisor articles render on the server with their own title and the article text
+  { path: "/articles?profileid=20170603-0003", status: 200, includes: "The Journey of a Baker" },
   { path: "/login", status: 200, includes: "<title>Login | LifePage</title>" },
   { path: "/this-page-does-not-exist", status: 404, includes: "This path doesn" },
   { path: "/api/bucket-image/avatar/20170603-0003.png", status: 200, contentType: "image/" },

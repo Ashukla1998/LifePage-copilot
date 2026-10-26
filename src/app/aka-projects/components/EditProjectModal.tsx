@@ -54,51 +54,48 @@ const INITIAL_FORM_STATE: AkaProjectsEditFormData = {
   end_year: '',
 };
 
+function toFormData(project: AkaProjects | null): AkaProjectsEditFormData {
+  if (!project) return INITIAL_FORM_STATE;
+  return {
+    title: project.title || '',
+    description: project.description || '',
+    location: project.location || '',
+    size: project.size || '',
+    buildup: project.buildup || '',
+    service: project.service || '',
+    status: project.status || '',
+    gallerypath: project.gallerypath || '',
+    category: project.category || '',
+    is_active: project.is_active ?? true,
+    start_year: project.start_year || '',
+    end_year: project.end_year || '',
+    cover: null,
+    project_images: (project.project_images || []).map((img) => ({
+      id: crypto.randomUUID(),
+      file: null,
+      image_location: img.image_location,
+      order_no: img.order_no,
+      description: img.description || '',
+    })),
+  };
+}
+
 export default function EditProjectModal({
   isOpen,
   project,
   onClose,
   onSubmit,
 }: EditProjectModalProps) {
-  const [formData, setFormData] = useState<AkaProjectsEditFormData>(INITIAL_FORM_STATE);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  // The page mounts this modal fresh (keyed by project) each time it opens, so state starts from the project
+  const [formData, setFormData] = useState<AkaProjectsEditFormData>(() => toFormData(project));
+  const [previewUrl, setPreviewUrl] = useState<string | null>(project?.cover || null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Sync state when project changes or modal opens
-  useEffect(() => {
-    if (isOpen && project) {
-      setFormData({
-        title: project.title || '',
-        description: project.description || '',
-        location: project.location || '',
-        size: project.size || '',
-        buildup: project.buildup || '',
-        service: project.service || '',
-        status: project.status || '',
-        gallerypath: project.gallerypath || '',
-        category: project.category || '',
-        is_active: project.is_active ?? true,
-        start_year: project.start_year || '',
-        end_year: project.end_year || '',
-        cover: null,
-        project_images: (project.project_images || []).map((img) => ({
-          id: crypto.randomUUID(),
-          file: null,
-          image_location: img.image_location,
-          order_no: img.order_no,
-          description: img.description || '',
-        })),
-      });
-      setPreviewUrl(project.cover || null);
-    } else {
-      setPreviewUrl(null);
-      setFormData(INITIAL_FORM_STATE);
-    }
-  }, [isOpen, project]);
   
   // Clean up blob URLs on unmount (replaced/removed ones are revoked in their handlers)
   const blobUrlsRef = useRef({ previewUrl, images: formData.project_images });
-  blobUrlsRef.current = { previewUrl, images: formData.project_images };
+  useEffect(() => {
+    blobUrlsRef.current = { previewUrl, images: formData.project_images };
+  });
   useEffect(() => {
     return () => {
       const { previewUrl, images } = blobUrlsRef.current;

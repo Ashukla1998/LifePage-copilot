@@ -361,21 +361,27 @@ export default function AkaProjectsPage() {
         </div>
       </div>
 
-      <AddProjectModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
-        onSubmit={handleAddProject}
-      />
+      {/* Modals are mounted only while open (keyed per project) so their forms start fresh */}
+      {isAddModalOpen && (
+        <AddProjectModal
+          isOpen
+          onClose={() => setIsAddModalOpen(false)}
+          onSubmit={handleAddProject}
+        />
+      )}
 
-      <EditProjectModal
-        isOpen={isEditModalOpen}
-        project={selectedProject}
-        onClose={() => {
-          setIsEditModalOpen(false);
-          setSelectedProject(null);
-        }}
-        onSubmit={handleEditProject}
-      />
+      {isEditModalOpen && (
+        <EditProjectModal
+          key={selectedProject?.projectid ?? 'none'}
+          isOpen
+          project={selectedProject}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setSelectedProject(null);
+          }}
+          onSubmit={handleEditProject}
+        />
+      )}
 
       <StatusModal
         isOpen={isStatusModalOpen}
