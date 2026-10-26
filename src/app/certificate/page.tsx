@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { API_BASE } from '@/lib/api';
 
 interface CollegeItem {
   college_name: string;
@@ -13,16 +14,25 @@ interface CertificatePayload {
   career_name?: string;
 }
 
+// The backend has returned colleges as objects, "Name - Criteria: ..." strings, or a JSON string of either
+interface RawCollegeObject {
+  college_name?: string;
+  name?: string;
+  admission_criteria?: string;
+  criteria?: string;
+}
+type RawCollegeData = string | Array<RawCollegeObject | string> | null | undefined;
+
 interface CertificateData {
   deegree_name?: string[] | string;
-  top_college_india?: any;
-  top_college_abroad?: any;
+  top_college_india?: RawCollegeData;
+  top_college_abroad?: RawCollegeData;
 }
 
-function parseCollegeData(rawData: any): CollegeItem[] {
+function parseCollegeData(rawData: RawCollegeData): CollegeItem[] {
   if (!rawData) return [];
 
-  let list = rawData;
+  let list: unknown = rawData;
 
   // Handle case if data is returned as a JSON string from the backend
   if (typeof rawData === 'string') {
@@ -35,7 +45,7 @@ function parseCollegeData(rawData: any): CollegeItem[] {
 
   if (!Array.isArray(list)) return [];
 
-  return list.map((item) => {
+  return (list as Array<RawCollegeObject | string>).map((item) => {
     // If it's already an object { college_name, admission_criteria }
     if (typeof item === 'object' && item !== null) {
       return {
@@ -84,7 +94,7 @@ function CertificateContent() {
       }
 
       try {
-        const res = await fetch('https://www.lifepage.in/n/api/GenerateCertificate', {
+        const res = await fetch(`${API_BASE}/GenerateCertificate`, {
           method: 'POST',
           headers: { Accept: 'application/json', 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
@@ -149,6 +159,8 @@ function CertificateContent() {
             className="w-[220px] h-[220px] rounded-full overflow-hidden relative border border-[#323232] mx-auto mb-4 shadow-sm"
             style={{ backgroundColor: '#e5e7eb' }}
           >
+            {/* Plain <img>: html2canvas captures this element for the certificate download */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={image} alt="Profile Avatar" className="w-full h-full object-cover" />
             <div
               className="rounded-lg absolute bottom-0 left-1/2 -translate-x-1/2 w-[213px] h-[51px] flex flex-col justify-between items-center py-1 text-white z-10"

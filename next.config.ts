@@ -8,6 +8,11 @@ const nextConfig: NextConfig = {
         hostname: "storage.googleapis.com",
       },
       {
+        protocol: "https",
+        hostname: "www.lifepage.in",
+        pathname: "/support/**",
+      },
+      {
         protocol: 'https',
         hostname: 'images.unsplash.com',
         pathname: '/**',

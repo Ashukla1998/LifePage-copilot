@@ -419,6 +419,8 @@ export default function EditProjectModal({
                 <div className="flex items-center gap-3">
                   {previewUrl && (
                     <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-100">
+                      {/* Plain <img>: previews are local blob: URLs, which next/image can't optimize */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={previewUrl}
                         alt="Preview"
@@ -490,6 +492,8 @@ export default function EditProjectModal({
                         {/* Thumbnail preview */}
                         <div className="w-12 h-12 rounded-lg border border-slate-200 bg-white shrink-0 overflow-hidden flex items-center justify-center">
                           {imgItem.previewUrl || imgItem.image_location ? (
+                            // Plain <img>: previews are local blob: URLs, which next/image can't optimize
+                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={imgItem.previewUrl || imgItem.image_location}
                               alt="Gallery Preview"

@@ -3,6 +3,7 @@
 import React, { useEffect, forwardRef } from "react";
 import { ArrowRight, Lightbulb, Search, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { API_BASE } from "@/lib/api";
 
 interface UserEventBody {
   userid: string;
@@ -13,11 +14,10 @@ interface UserEventBody {
 interface HomeFormBoxProps {
   careerInput: string;
   setCareerInput: (value: string) => void;
-  popular?: string[];
 }
 
 const HomeFormBox = forwardRef<HTMLInputElement, HomeFormBoxProps>(
-  ({ careerInput, setCareerInput, popular = [] }, ref) => {
+  ({ careerInput, setCareerInput }, ref) => {
     const router = useRouter();
 
     useEffect(() => {
@@ -40,7 +40,7 @@ const HomeFormBox = forwardRef<HTMLInputElement, HomeFormBoxProps>(
           end_time: new Date().toISOString(),
         };
 
-        fetch("https://www.lifepage.in/n/api/user_event", {
+        fetch(`${API_BASE}/user_event`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
@@ -64,7 +64,7 @@ const HomeFormBox = forwardRef<HTMLInputElement, HomeFormBoxProps>(
 
       try {
         const res = await fetch(
-          "https://www.lifepage.in/n/api/update_user_event",
+          `${API_BASE}/update_user_event`,
           {
             method: "PUT",
             headers: { "Content-Type": "application/json" },

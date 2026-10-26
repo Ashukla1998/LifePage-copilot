@@ -2,22 +2,12 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { Plus_Jakarta_Sans } from "next/font/google";
-import { BookOpen, ChartColumn, ChevronRight, Compass, Rocket, Sparkles } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import Navbar from "../components/Navbar";
 import HomeFormBox from "../components/HomeFormBox";
 import TrendingMarquee, { type TrendingCareer } from "../components/TrendingMarquee";
-
-const jakarta = Plus_Jakarta_Sans({ subsets: ["latin"], weight: ["400", "500", "600", "700", "800"] });
-
-const FALLBACK_POPULAR = ["Data Scientist", "Doctor", "Civil Engineer", "Designer", "Teacher"];
-
-const FEATURES = [
-  { icon: Compass, title: "Explore", subtitle: "Careers", color: "text-amber-500" },
-  { icon: BookOpen, title: "Learn", subtitle: "Skills & Education", color: "text-blue-500" },
-  { icon: ChartColumn, title: "Compare", subtitle: "Roles & Opportunities", color: "text-orange-400" },
-  { icon: Rocket, title: "Plan", subtitle: "Your Future", color: "text-rose-500" },
-];
+import { API_BASE } from "@/lib/api";
+import { jakarta } from "@/lib/fonts";
 
 // Fades the side images into the page background on every edge except the outer one
 const sideMask = (outer: "left" | "right") => {
@@ -39,7 +29,7 @@ export default function Home() {
   useEffect(() => {
     const fetchCareerCount = async () => {
       try {
-        const res = await fetch("https://www.lifepage.in/n/api/navbar", {
+        const res = await fetch(`${API_BASE}/navbar`, {
           method: "GET",
           headers: { "Content-Type": "application/json" },
         });
@@ -74,9 +64,6 @@ export default function Home() {
 
   const formattedCount = count ? `${Number(count).toLocaleString()}+` : "2000+";
   // Short names only, so the chips stay on a single row
-  const careerNames = careers.map((career) => career.topic);
-  const shortNames = careerNames.filter((name) => name.length <= 14);
-  const popular = shortNames.length >= 3 ? shortNames.slice(0, 5) : FALLBACK_POPULAR;
 
   return (
     <div className="min-h-dvh w-full bg-[linear-gradient(180deg,#f4f7fb_0%,#f8f9fb_55%,#fbf8f4_100%)] flex flex-col">
@@ -140,31 +127,9 @@ export default function Home() {
                 ref={inputRef}
                 careerInput={careerInput}
                 setCareerInput={setCareerInput}
-                popular={popular}
               />
             </div>
 
-            {/* Feature Row */}
-            {/* <div className="mt-8 grid w-full max-w-[820px] lg:w-[calc(100%+4rem)] grid-cols-2 gap-4 sm:grid-cols-4 sm:gap-0">
-              {FEATURES.map(({ icon: Icon, title, subtitle, color }, i) => (
-                <div
-                  key={title}
-                  className={`flex items-center gap-3 text-left sm:justify-center sm:px-4 ${
-                    i > 0 ? "sm:border-l sm:border-gray-200" : ""
-                  }`}
-                >
-                  <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_4px_14px_rgba(15,23,42,0.08)] ${color}`}>
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <span className="leading-tight">
-                    <span className="block text-[15px] font-semibold text-gray-900">{title}</span>
-                    <span className="block whitespace-nowrap text-xs text-gray-500">
-                      {title === "Explore" ? `${formattedCount} ${subtitle}` : subtitle}
-                    </span>
-                  </span>
-                </div>
-              ))}
-            </div> */}
           </div>
         </section>
 

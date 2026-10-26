@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { FiPower, FiCheckCircle, FiLoader } from 'react-icons/fi';
 import { AkaMember } from '../types';
+import { API_BASE } from '@/lib/api';
 
 interface StatusModalProps {
   isOpen: boolean;
@@ -11,7 +12,7 @@ interface StatusModalProps {
   onSuccess: (updatedMember: AkaMember) => void;
 }
 
-const EDIT_API_URL = 'https://www.lifepage.in/n/api/EditMember';
+const EDIT_API_URL = `${API_BASE}/EditMember`;
 
 export default function StatusModal({
   isOpen,

@@ -334,6 +334,8 @@ export default function AddProjectModal({
                 <div className="flex items-center gap-3">
                   {previewUrl && (
                     <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-100">
+                      {/* Plain <img>: previews are local blob: URLs, which next/image can't optimize */}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
                     </div>
                   )}

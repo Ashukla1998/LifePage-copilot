@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
+import Image from 'next/image';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { Plus_Jakarta_Sans } from 'next/font/google';
 import {
   ArrowRight,
   Award,
@@ -16,8 +16,8 @@ import {
   Users,
 } from 'lucide-react';
 import Navbar from '../../components/Navbar';
-
-const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] });
+import { API_BASE } from '@/lib/api';
+import { jakarta } from '@/lib/fonts';
 
 interface Advisor {
   sessionid: string;
@@ -44,62 +44,63 @@ function AdvisorListContent() {
   const searchParams = useSearchParams();
 
   const careerRaw = searchParams.get('career') || '';
-  // const [fieldOfStudy, setFieldOfStudy] = useState<string>('');
   const [advisors, setAdvisors] = useState<Advisor[]>([]);
   const [similarAdvisors, setSimilarAdvisors] = useState<Advisor[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string>('');
-  
+  // The search term whose results have arrived; anything else is still loading
+  const [loadedTerm, setLoadedTerm] = useState<string | null>(null);
+  const isLoading = careerRaw !== '' && loadedTerm !== careerRaw;
+  const emptyMessage = careerRaw ? errorMsg : 'Search for a career to see its advisors.';
+
   const displayedSessionIds = useRef<Set<string>>(new Set());
 
-  // 🔹 Fetch Field of Study (replaces PHP Guzzle client logic)
-  // useEffect(() => {
-  //   if (!careerRaw) return;
-
-  //   async function fetchFieldOfStudy() {
-  //     try {
-  //       const res = await fetch('https://www.lifepage.in/n/api/ask', {
-  //         method: 'POST',
-  //         headers: {
-  //           Accept: 'application/json',
-  //           'Content-Type': 'application/json',
-  //         },
-  //         body: JSON.stringify({
-  //           prompt: `give a single term answer for what is the field of study for ${careerRaw}`,
-  //         }),
-  //       });
-  //       const json = await res.json();
-  //       const detectedField = json.data || '';
-  //       setFieldOfStudy(detectedField);
-  //       sessionStorage.setItem('fieldOfStudy', detectedField);
-  //     } catch (err) {
-  //       console.error('Field of Study API error:', err);
-  //     }
-  //   }
-
-  //   fetchFieldOfStudy();
-  // }, [careerRaw]);
   // 🔹 Fetch Main Career Results based on "career" search query
   useEffect(() => {
     if (!careerRaw) return;
 
-    setIsLoading(true);
     sessionStorage.setItem('term', careerRaw);
 
-    fetch('https://www.lifepage.in/n/api/SearchByName', {
+    // 🔹 Fetch Similar Careers
+    const loadSimilarTalks = (div: string, subdiv: string) => {
+      fetch(`${API_BASE}/SimilarTalk`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: div,
+          subcategory: subdiv,
+          excludeIds: Array.from(displayedSessionIds.current),
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.data || data.data.length === 0) return;
+
+          const filtered: Advisor[] = data.data.filter(
+            (item: Advisor) =>
+              !displayedSessionIds.current.has(String(item.sessionid))
+          );
+
+          setSimilarAdvisors(filtered);
+        })
+        .catch((err) => console.error('Similar Talks API failed:', err));
+    };
+
+    fetch(`${API_BASE}/SearchByName`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name: careerRaw }),
     })
       .then((res) => res.json())
       .then((data) => {
-        setIsLoading(false);
+        setLoadedTerm(careerRaw);
         if (!data.data || data.data.length === 0) {
+          setAdvisors([]);
           setErrorMsg('No careers found.');
           return;
         }
 
         const mainList: Advisor[] = data.data;
+        setErrorMsg('');
         setAdvisors(mainList);
 
         // Track seen session ids
@@ -115,35 +116,10 @@ function AdvisorListContent() {
       })
       .catch((err) => {
         console.error('Search API failed:', err);
-        setIsLoading(false);
+        setLoadedTerm(careerRaw);
         setErrorMsg('Something went wrong. Please try again.');
       });
   }, [careerRaw]);
-
-  // 🔹 Fetch Similar Careers
-  const loadSimilarTalks = (div: string, subdiv: string) => {
-    fetch('https://www.lifepage.in/n/api/SimilarTalk', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        category: div,
-        subcategory: subdiv,
-        excludeIds: Array.from(displayedSessionIds.current),
-      }),
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (!data.data || data.data.length === 0) return;
-
-        const filtered: Advisor[] = data.data.filter(
-          (item: Advisor) =>
-            !displayedSessionIds.current.has(String(item.sessionid))
-        );
-
-        setSimilarAdvisors(filtered);
-      })
-      .catch((err) => console.error('Similar Talks API failed:', err));
-  };
 
   // 🔹 Event End-Time Tracker API call helper
   const sendEndTime = async () => {
@@ -157,7 +133,7 @@ function AdvisorListContent() {
     };
 
     try {
-      await fetch('https://www.lifepage.in/n/api/update_user_event', {
+      await fetch(`${API_BASE}/update_user_event`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -181,7 +157,7 @@ function AdvisorListContent() {
       if (navigator.sendBeacon) {
         const blob = new Blob([payload], { type: 'application/json' });
         navigator.sendBeacon(
-          'https://www.lifepage.in/n/api/update_user_event',
+          `${API_BASE}/update_user_event`,
           blob
         );
       }
@@ -207,6 +183,7 @@ function AdvisorListContent() {
     await sendEndTime();
 
     sessionStorage.removeItem('isAi');
+    sessionStorage.removeItem('fieldOfStudy');
     sessionStorage.setItem('avatar', advisor.avatar || '');
     sessionStorage.setItem('profileid', advisor.sessionid);
     sessionStorage.setItem('thumbfile', advisor.thumbfile || '');
@@ -220,6 +197,8 @@ function AdvisorListContent() {
 
     sessionStorage.setItem('isAi', 'true');
     sessionStorage.setItem('fieldOfStudy', careerRaw);
+    sessionStorage.removeItem('profileid');
+    sessionStorage.removeItem('topic');
 
     router.push(`/articles?fieldOfStudy=${encodeURIComponent(careerRaw)}`);
   };
@@ -254,10 +233,12 @@ function AdvisorListContent() {
         {/* Cover */}
         <div className="relative h-24 w-full overflow-hidden bg-gradient-to-br from-amber-200 via-orange-200 to-rose-200">
           {cover && (
-            <img
+            <Image
               src={cover}
               alt=""
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+              fill
+              sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -271,7 +252,9 @@ function AdvisorListContent() {
 
         {/* Body */}
         <div className="flex flex-1 flex-col px-5 pb-5">
-          <img
+          <Image
+            width={80}
+            height={80}
             src={
               item.profilepic
                 ? `https://storage.googleapis.com/lifepage-plan/amscareerprofile/${item.profilepic}`
@@ -338,8 +321,11 @@ function AdvisorListContent() {
           >
             <span className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-[#C9822B]/30 blur-3xl" />
             <span className="relative shrink-0">
-              <img
+              <Image
                 src="/ai.jpg"
+                width={96}
+                height={96}
+                priority
                 className="h-20 w-20 rounded-full border-2 border-[#C9822B] object-cover shadow-[0_0_30px_rgba(201,130,43,0.5)] sm:h-24 sm:w-24"
                 alt="AI Career Advisor"
               />
@@ -401,12 +387,12 @@ function AdvisorListContent() {
             )}
 
             {/* Empty / Error State */}
-            {errorMsg && (
+            {emptyMessage && (
               <div className="flex flex-col items-center rounded-2xl border border-dashed border-gray-200 bg-white px-6 py-10 text-center">
                 <span className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-rose-50 text-rose-500">
                   <SearchX className="h-6 w-6" />
                 </span>
-                <p className="font-semibold text-gray-900">{errorMsg}</p>
+                <p className="font-semibold text-gray-900">{emptyMessage}</p>
                 <p className="mt-1 text-sm text-gray-500">
                   Try the AI Career Advisor above, or start a new search.
                 </p>

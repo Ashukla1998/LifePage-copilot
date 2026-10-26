@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { Plus_Jakarta_Sans } from 'next/font/google';
+import Image from 'next/image';
+import { useSearchParams } from 'next/navigation';
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,14 +14,22 @@ import {
   Sparkles,
   UserPlus,
 } from 'lucide-react';
+import { toast } from 'sonner';
 import Navbar from '../../components/Navbar';
-
-const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] });
+import AdaptiveVideo from '@/components/AdaptiveVideo';
+import { API_BASE } from '@/lib/api';
+import { jakarta } from '@/lib/fonts';
 
 // 🔹 TypeScript Interfaces
 interface QuestionDetail {
   sessionid: string;
   que_category: string;
+  question: string;
+  percentage: string | number;
+}
+
+interface AiPercentageItem {
+  category: string;
   question: string;
   percentage: string | number;
 }
@@ -65,14 +73,12 @@ const orbitConfig: OrbitConfigItem[] = [
 ];
 
 function ArticlesContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
 
   // Parse URL query params
   const profileIdFromUrl = searchParams.get('profileid') || '';
   const fieldOfStudyFromUrl = searchParams.get('fieldOfStudy') || '';
 
-  const [count, setCount] = useState<string>('');
   const [articleTitle, setArticleTitle] = useState<string>("Deep dive into Your Career");
   const [topic, setTopic] = useState<string>('');
   const [profileImageSrc, setProfileImageSrc] = useState<string>('/choices.jpg');
@@ -105,73 +111,28 @@ function ArticlesContent() {
 
   // Youtube video of play 
   const [videoUrl, setVideoUrl] = useState<string>('');
+  // DASH manifest for adaptive streaming; empty when the video isn't a bucket file
+  const [dashUrl, setDashUrl] = useState<string>('');
 
   const profileId = useRef<string>('');
   const isAi = useRef<boolean>(false);
   const fieldOfStudy = useRef<string>('');
 
-  const getYouTubeEmbedUrl = (url: string): string => {
-    if (!url) return '';
+  const getYouTubeEmbedUrl = (url: string): string | null => {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11)
       ? `https://www.youtube.com/embed/${match[2]}`
-      : url;
+      : null;
   };
 
-  // 🔹 Fetch Navbar Data
-  useEffect(() => {
-    const fetchNavbarData = async () => {
-      try {
-        const res = await fetch('https://www.lifepage.in/n/api/navbar', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-        });
-        const json = await res.json();
-        if (json.success === 1) {
-          setCount(json.count);
-        }
-      } catch (error) {
-        console.error('Error fetching navbar data:', error);
-      }
-    };
-    fetchNavbarData();
-  }, []);
-
-  // 🔹 Sync Initial URL variables & session storage on load
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    if (!sessionStorage.getItem("lp_session_started")) {
-      localStorage.removeItem("hasUploaded");
-      localStorage.removeItem("hasCalculated");
-      sessionStorage.setItem("lp_session_started", "true");
-    }
-
-    const cachedTopic = sessionStorage.getItem("topic") || '';
-    setTopic(cachedTopic);
-
-    const storedIsAi = sessionStorage.getItem("isAi") === "true";
-    isAi.current = storedIsAi;
-
-    const storedFieldOfStudy = sessionStorage.getItem("fieldOfStudy") || '';
-    fieldOfStudy.current = storedFieldOfStudy;
-
-    const storedProfileId = sessionStorage.getItem("profileid") || '';
-    profileId.current = storedProfileId;
-
-    // Direct fallback checks
-    if (profileIdFromUrl) profileId.current = profileIdFromUrl;
-    if (fieldOfStudyFromUrl) fieldOfStudy.current = fieldOfStudyFromUrl;
-
-    initData();
-    startAvatarProcess(cachedTopic);
-
-    // Prevent secondary default right-click popups
-    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
-    document.addEventListener('contextmenu', handleContextMenu);
-    return () => document.removeEventListener('contextmenu', handleContextMenu);
-  }, [profileIdFromUrl, fieldOfStudyFromUrl]);
+  // checksession returns a bare file name (e.g. "20181219-0001.mp4") that lives in the session's
+  // bucket folder, like the step images; full URLs (YouTube or otherwise) are used as they are
+  const resolveVideoUrl = (videofile: string, sessionid: string): string => {
+    if (!videofile) return '';
+    if (/^https?:\/\//i.test(videofile)) return videofile;
+    return `https://storage.googleapis.com/lifepage-video-android/${sessionid}/${encodeURIComponent(videofile)}`;
+  };
 
   // 🔹 Countdown Timer hook
   useEffect(() => {
@@ -187,44 +148,6 @@ function ArticlesContent() {
     }, 1000);
     return () => clearInterval(interval);
   }, [isAiLoading]);
-
-  // 🔹 Fetch Article title
-  useEffect(() => {
-    async function fetchHeading() {
-      const type = profileId.current ? 'profile' : fieldOfStudy.current ? 'ai' : '';
-      const val = type === 'profile' ? profileId.current : fieldOfStudy.current;
-      if (!type || !val) return;
-
-      try {
-        if (type === 'profile') {
-          const res = await fetch('https://www.lifepage.in/n/api/checksession', {
-            method: 'POST',
-            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id: val })
-          });
-          const result = await res.json();
-          if (result.success === 1) {
-            const markdown = result.data[0].content;
-            const matches = markdown.match(/^#\s*(.+)/m);
-            if (matches) setArticleTitle(matches[1].trim());
-          }
-        } else {
-          const res = await fetch('https://www.lifepage.in/n/api/getDescription', {
-            method: 'POST',
-            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name: val })
-          });
-          const result = await res.json();
-          if (result.success === 1) {
-            setArticleTitle(result.data);
-          }
-        }
-      } catch (err) {
-        console.error("Article Heading API error:", err);
-      }
-    }
-    fetchHeading();
-  }, [profileIdFromUrl, fieldOfStudyFromUrl]);
 
   // 🔹 Init Assessment and Questions
   const initData = async () => {
@@ -246,7 +169,7 @@ function ArticlesContent() {
   const fetchQuestionDetails = async () => {
     if (!profileId.current) return;
     try {
-      const res = await fetch("https://www.lifepage.in/n/api/questiondetails", {
+      const res = await fetch(`${API_BASE}/questiondetails`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: profileId.current })
@@ -282,7 +205,7 @@ function ArticlesContent() {
   const fetchSessionContent = async () => {
     if (!profileId.current) return;
     try {
-      const res = await fetch("https://www.lifepage.in/n/api/checksession", {
+      const res = await fetch(`${API_BASE}/checksession`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: profileId.current })
@@ -291,7 +214,14 @@ function ArticlesContent() {
       if (data.success === 1) {
         const parsed = parseMarkdown(data.data[0].content);
         setSections(parsed);
-        setVideoUrl(data.data[0].videofile || '');
+        const videofile: string = data.data[0].videofile || '';
+        setVideoUrl(resolveVideoUrl(videofile, profileId.current));
+        // Bucket videos also have a DASH rendition set at {sessionid}/video/stream.mpd
+        setDashUrl(
+          videofile && !/^https?:\/\//i.test(videofile)
+            ? `https://storage.googleapis.com/lifepage-video-android/${profileId.current}/video/stream.mpd`
+            : ''
+        );
       }
     } catch (err) {
       console.error(err);
@@ -302,7 +232,7 @@ function ArticlesContent() {
     const career = sessionStorage.getItem("fieldOfStudy") || fieldOfStudy.current;
     if (!career) return;
     try {
-      const res = await fetch("https://www.lifepage.in/n/api/testing", {
+      const res = await fetch(`${API_BASE}/testing`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ career_name: career })
@@ -317,7 +247,7 @@ function ArticlesContent() {
         const parsed = parseMarkdown(markdown);
         setSections(parsed);
 
-        const apiQuestions: QuestionDetail[] = data.article.percentage.map((item: any) => ({
+        const apiQuestions: QuestionDetail[] = data.article.percentage.map((item: AiPercentageItem) => ({
           que_category: item.category,
           question: item.question,
           percentage: item.percentage
@@ -436,7 +366,7 @@ function ArticlesContent() {
   // `topic` state isn't updated yet when this runs on mount, so the career name is passed in
   const startAvatarProcess = (knownTopic: string) => {
     if (fieldOfStudy.current) {
-      fetch("https://www.lifepage.in/n/api/generateCareerAvatar", {
+      fetch(`${API_BASE}/generateCareerAvatar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ career_name: fieldOfStudy.current })
@@ -448,7 +378,7 @@ function ArticlesContent() {
           }
         });
     } else {
-      fetch("https://www.lifepage.in/n/api/getAvatar", {
+      fetch(`${API_BASE}/getAvatar`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: profileId.current })
@@ -471,7 +401,7 @@ function ArticlesContent() {
 
   const generateAvatar = (careerName: string) => {
     const prompt = `Create a high-quality 3D animated character illustration representing a professional ${careerName}...`;
-    fetch("https://www.lifepage.in/n/api/avatar", {
+    fetch(`${API_BASE}/avatar`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -499,6 +429,98 @@ function ArticlesContent() {
     const path = avatarPath.split('/').map(encodeURIComponent).join('/');
     setProfileImageSrc(`/api/bucket-image/${path}?v=${Date.now()}`);
   };
+
+  // 🔹 Sync Initial URL variables & session storage on load
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    if (!sessionStorage.getItem("lp_session_started")) {
+      localStorage.removeItem("hasUploaded");
+      localStorage.removeItem("hasCalculated");
+      sessionStorage.setItem("lp_session_started", "true");
+    }
+
+    const storedIsAi = sessionStorage.getItem("isAi") === "true";
+    isAi.current = storedIsAi;
+
+    const storedFieldOfStudy = sessionStorage.getItem("fieldOfStudy") || '';
+    fieldOfStudy.current = storedFieldOfStudy;
+
+    const storedProfileId = sessionStorage.getItem("profileid") || '';
+    profileId.current = storedProfileId;
+
+    // The URL decides the mode; sessionStorage can hold leftovers from an earlier article in this tab
+    if (profileIdFromUrl) {
+      profileId.current = profileIdFromUrl;
+      fieldOfStudy.current = '';
+      isAi.current = false;
+      sessionStorage.setItem("profileid", profileIdFromUrl);
+      sessionStorage.removeItem("fieldOfStudy");
+      sessionStorage.removeItem("isAi");
+    } else if (fieldOfStudyFromUrl) {
+      fieldOfStudy.current = fieldOfStudyFromUrl;
+      profileId.current = '';
+      isAi.current = true;
+      sessionStorage.setItem("fieldOfStudy", fieldOfStudyFromUrl);
+      sessionStorage.setItem("isAi", "true");
+      sessionStorage.removeItem("profileid");
+    }
+
+    // The cached topic belongs to whichever advisor was last opened, so only trust it for that same session
+    const cachedTopic =
+      !isAi.current && storedProfileId === profileId.current
+        ? sessionStorage.getItem("topic") || ''
+        : '';
+    setTopic(cachedTopic);
+
+    initData();
+    startAvatarProcess(cachedTopic);
+
+    // Prevent secondary default right-click popups
+    const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+    document.addEventListener('contextmenu', handleContextMenu);
+    return () => document.removeEventListener('contextmenu', handleContextMenu);
+    // Re-run only when the article in the URL changes; the helpers it calls read refs, not props
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileIdFromUrl, fieldOfStudyFromUrl]);
+
+  // 🔹 Fetch Article title
+  useEffect(() => {
+    async function fetchHeading() {
+      const type = profileId.current ? 'profile' : fieldOfStudy.current ? 'ai' : '';
+      const val = type === 'profile' ? profileId.current : fieldOfStudy.current;
+      if (!type || !val) return;
+
+      try {
+        if (type === 'profile') {
+          const res = await fetch(`${API_BASE}/checksession`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: val })
+          });
+          const result = await res.json();
+          if (result.success === 1) {
+            const markdown = result.data[0].content;
+            const matches = markdown.match(/^#\s*(.+)/m);
+            if (matches) setArticleTitle(matches[1].trim());
+          }
+        } else {
+          const res = await fetch(`${API_BASE}/getDescription`, {
+            method: 'POST',
+            headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: val })
+          });
+          const result = await res.json();
+          if (result.success === 1) {
+            setArticleTitle(result.data);
+          }
+        }
+      } catch (err) {
+        console.error("Article Heading API error:", err);
+      }
+    }
+    fetchHeading();
+  }, [profileIdFromUrl, fieldOfStudyFromUrl]);
 
   // 🔹 Progress Calculation Utility
   const calculateProgress = (): number => {
@@ -650,7 +672,7 @@ function ArticlesContent() {
     saveCurrentAnswer();
     if (isCompletedStep()) {
       try {
-        const res = await fetch("https://www.lifepage.in/n/api/DreamIndex", {
+        const res = await fetch(`${API_BASE}/DreamIndex`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(userResponses.current)
@@ -682,7 +704,7 @@ function ArticlesContent() {
   };
 
   const updateAvatarType = () => {
-    const userid = localStorage.getItem("lp_userid");
+    const userid = sessionStorage.getItem("lp_userid");
     if (!userid) return;
 
     const hasUploaded = localStorage.getItem("hasUploaded") === "true";
@@ -694,7 +716,7 @@ function ArticlesContent() {
       which_avatar = "personal_with_self_assessment";
     }
 
-    fetch("https://www.lifepage.in/n/api/update_user_event", {
+    fetch(`${API_BASE}/update_user_event`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ userid, which_avatar })
@@ -704,7 +726,7 @@ function ArticlesContent() {
   const handleDownloadAvatar = () => {
     const img = document.getElementById("profileImage") as HTMLImageElement;
     if (img && !img.complete) {
-      alert("Image still loading. Please wait...");
+      toast.info("Image still loading. Please wait...");
       return;
     }
 
@@ -803,13 +825,15 @@ function ArticlesContent() {
 
   const section = sections[currentIndex];
   const activeContent = section?.content[contentIndex];
-  const careerName = topic || fieldOfStudy.current;
+  const isAiArticle = fieldOfStudyFromUrl !== '';
+  const youTubeEmbedUrl = videoUrl ? getYouTubeEmbedUrl(videoUrl) : null;
+  const careerName = topic || fieldOfStudyFromUrl;
   const isFirstStep = currentIndex === 0 && contentIndex === 0;
 
   return (
     <div className="box-border flex flex-1 w-full flex-col bg-[linear-gradient(180deg,#f4f7fb_0%,#f8f9fb_55%,#fbf8f4_100%)]">
       {/* 🔹 Top Navbar */}
-      <Navbar careerCount={count} />
+      <Navbar />
 
       {/* Main Content Area */}
       <main className={`mx-auto w-full max-w-[1280px] flex-1 px-4 py-8 sm:px-6 lg:px-8 ${jakarta.className}`}>
@@ -834,6 +858,8 @@ function ArticlesContent() {
                 className="relative h-[220px] w-[220px] overflow-hidden rounded-full border-4 border-white"
                 style={{ backgroundColor: '#e5e7eb' }}
               >
+                {/* Plain <img>: html2canvas captures this element for the avatar download */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   id="profileImage"
                   src={profileImageSrc}
@@ -974,31 +1000,42 @@ function ArticlesContent() {
                 <div className="mx-auto w-full max-w-[760px]">
                   {activeContent?.image && (
                     <div className="relative mb-2">
-                      {isAi.current && (
+                      {isAiArticle && (
                         <div className="mb-3 inline-flex max-w-full items-center gap-2 rounded-full bg-gray-900 px-3.5 py-1.5 text-xs font-semibold text-white">
                           <span className="rounded-full bg-[#C9822B] px-2 py-0.5 text-[10px] uppercase tracking-wider">{section?.title}</span>
                           <span className="truncate">{activeContent.subtitle}</span>
                         </div>
                       )}
                       <div className={`grid items-center gap-4 ${videoUrl && activeContent?.image ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-                        {/* Left: YouTube Player */}
+                        {/* Left: Career Video (bucket file, or YouTube embed) */}
                         {videoUrl && (
                           <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-md">
-                            <iframe
-                              src={getYouTubeEmbedUrl(videoUrl)}
-                              title="Career Video"
-                              className="h-full w-full border-0"
-                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                              allowFullScreen
-                            />
+                            {youTubeEmbedUrl ? (
+                              <iframe
+                                src={youTubeEmbedUrl}
+                                title="Career Video"
+                                className="h-full w-full border-0"
+                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                allowFullScreen
+                              />
+                            ) : (
+                              <AdaptiveVideo
+                                dashUrl={dashUrl}
+                                mp4Url={videoUrl}
+                                className="h-full w-full object-contain"
+                              />
+                            )}
                           </div>
                         )}
 
                         {/* Right: Step Image */}
                         {activeContent?.image && (
                           <div className="flex h-full w-full items-center justify-center">
-                            <img
+                            <Image
                               src={activeContent.image}
+                              width={1280}
+                              height={720}
+                              sizes="(min-width: 1024px) 760px, 100vw"
                               className={`block w-full rounded-2xl object-contain shadow-md ${videoUrl ? 'aspect-video max-h-[400px]' : 'h-auto max-h-[500px]'}`}
                               alt="Step visual"
                             />

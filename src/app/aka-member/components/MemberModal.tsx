@@ -3,6 +3,7 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 import { FiX, FiLoader, FiUploadCloud } from 'react-icons/fi';
 import { AkaMember, AkaMemberFormData } from '../types';
+import { API_BASE } from '@/lib/api';
 
 interface MemberModalProps {
   isOpen: boolean;
@@ -11,8 +12,8 @@ interface MemberModalProps {
   initialData?: AkaMember | null;
 }
 
-const CREATE_API_URL = 'https://www.lifepage.in/n/api/AkaMember';
-const EDIT_API_URL = 'https://www.lifepage.in/n/api/EditMember';
+const CREATE_API_URL = `${API_BASE}/AkaMember`;
+const EDIT_API_URL = `${API_BASE}/EditMember`;
 
 export default function MemberModal({
   isOpen,
@@ -248,6 +249,8 @@ export default function MemberModal({
             <div className="flex items-center gap-4">
               <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
                 {previewUrl ? (
+                  // Plain <img>: previews are local blob: URLs, which next/image can't optimize
+                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={previewUrl}
                     alt="Preview"

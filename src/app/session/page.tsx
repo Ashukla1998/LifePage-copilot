@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { API_BASE } from '@/lib/api';
 
 interface Question {
   questionid: string;
@@ -51,7 +52,7 @@ export default function CareerSessionsPage() {
     async function fetchSessions() {
       try {
         setLoading(true);
-        const res = await fetch("https://www.lifepage.in/n/api/tmp");
+        const res = await fetch(`${API_BASE}/tmp`);
         const json: ApiResponse = await res.json();
 
         if (json.success && Array.isArray(json.data)) {

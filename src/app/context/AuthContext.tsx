@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useMemo, useSyncExternalStore } from 'react';
 
 // Exact interface matching your API response
 export interface UserData {
@@ -30,36 +30,45 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
-  const [user, setUser] = useState<UserData | null>(null);
+const USER_KEY = 'user_data';
+const AUTH_CHANGE_EVENT = 'lp-auth-change';
 
-  // Load user from storage on initial page render
-  useEffect(() => {
+// sessionStorage is the source of truth; components re-read it when login/logout fire the event
+const subscribe = (onChange: () => void) => {
+  window.addEventListener(AUTH_CHANGE_EVENT, onChange);
+  window.addEventListener('storage', onChange);
+  return () => {
+    window.removeEventListener(AUTH_CHANGE_EVENT, onChange);
+    window.removeEventListener('storage', onChange);
+  };
+};
+const getSnapshot = () => sessionStorage.getItem(USER_KEY);
+const getServerSnapshot = () => null;
+
+export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
+  const savedUser = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+
+  const user = useMemo<UserData | null>(() => {
+    if (!savedUser) return null;
     try {
-      const savedUser = sessionStorage.getItem('user_data');
-      if (savedUser) {
-        const parsed = JSON.parse(savedUser);
-        setUser(parsed);
-        setIsLoggedIn(true);
-      }
+      return JSON.parse(savedUser);
     } catch (e) {
       console.error('Failed to parse stored user data', e);
+      return null;
     }
-  }, []);
+  }, [savedUser]);
+  const isLoggedIn = user !== null;
 
   const login = (userData: UserData) => {
-    sessionStorage.setItem('user_data', JSON.stringify(userData));
-    sessionStorage.setItem('lp_userid', userData.memberid);
-    setUser(userData);
-    setIsLoggedIn(true);
+    // lp_userid stays the anonymous visitor id that user_event tracking rows are keyed by;
+    // the member id is available from user_data
+    sessionStorage.setItem(USER_KEY, JSON.stringify(userData));
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
   };
 
   const logout = () => {
-    sessionStorage.removeItem('user_data');
-    sessionStorage.removeItem('lp_userid');
-    setUser(null);
-    setIsLoggedIn(false);
+    sessionStorage.removeItem(USER_KEY);
+    window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
   };
 
   return (

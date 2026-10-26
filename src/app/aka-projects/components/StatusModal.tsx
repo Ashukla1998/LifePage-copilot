@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { FiPower, FiCheckCircle, FiLoader } from 'react-icons/fi';
 import { AkaProjects } from '../types';
+import { API_BASE } from '@/lib/api';
 
 interface StatusModalProps {
   isOpen: boolean;
@@ -11,7 +12,7 @@ interface StatusModalProps {
   onSuccess: (updatedProject: AkaProjects) => void;
 }
 
-const EDIT_API_URL = 'https://www.lifepage.in/n/api/EditProject';
+const EDIT_API_URL = `${API_BASE}/EditProject`;
 
 export default function StatusModal({
   isOpen,
@@ -26,45 +27,49 @@ export default function StatusModal({
 
   const willBeActive = !project.is_active;
 
-  // const handleConfirm = async () => {
-  //   setErrorMsg(null);
-  //   setLoading(true);
+  const handleConfirm = async () => {
+    setErrorMsg(null);
+    setLoading(true);
 
-  //   try {
-  //     const payload = {
-  //       memberid: member.memberid,
-  //       name: member.name,
-  //       role: member.role,
-  //       photo: member.photo || null,
-  //       degree: member.degree || null,
-  //       category: member.category,
-  //       experience: member.experience || null,
-  //       description: member.description || null,
-  //       is_active: willBeActive,
-  //     };
+    try {
+      // Same payload as the Edit form, with only is_active flipped; null cover / no new images keep the existing ones
+      const payload = {
+        projectid: project.projectid,
+        title: project.title,
+        description: project.description,
+        location: project.location,
+        size: project.size,
+        buildup: project.buildup,
+        service: project.service,
+        status: project.status,
+        start_year: project.start_year,
+        end_year: project.end_year,
+        gallerypath: project.gallerypath,
+        category: project.category,
+        is_active: willBeActive,
+        cover: null,
+        new_images: [],
+      };
 
-  //     const res = await fetch(EDIT_API_URL, {
-  //       method: 'PUT',
-  //       headers: {
-  //         'Content-Type': 'application/json',
-  //       },
-  //       body: JSON.stringify(payload),
-  //     });
+      const res = await fetch(EDIT_API_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const result = await res.json();
 
-  //     const result = await res.json();
-
-  //     if (res.ok && result.success === 1) {
-  //       onSuccess(result.data || { ...member, is_active: willBeActive });
-  //       onClose();
-  //     } else {
-  //       setErrorMsg(result.message || 'Failed to update member status.');
-  //     }
-  //   } catch (err: unknown) {
-  //     setErrorMsg(err instanceof Error ? err.message : 'Network error occurred.');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+      if (res.ok && result.success === 1) {
+        onSuccess({ ...project, ...(result.data || {}), is_active: willBeActive });
+        onClose();
+      } else {
+        setErrorMsg(result.message || 'Failed to update project status.');
+      }
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Network error occurred.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
@@ -103,7 +108,7 @@ export default function StatusModal({
           <button
             type="button"
             disabled={loading}
-            // onClick={handleConfirm}
+            onClick={handleConfirm}
             className={`inline-flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white rounded-lg shadow-sm transition disabled:opacity-60 ${
               willBeActive
                 ? 'bg-emerald-600 hover:bg-emerald-700'
