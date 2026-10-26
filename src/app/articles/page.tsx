@@ -2,7 +2,21 @@
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { Plus_Jakarta_Sans } from 'next/font/google';
+import {
+  ArrowLeft,
+  ArrowRight,
+  Check,
+  Compass,
+  Download,
+  MessageCircleQuestion,
+  Pencil,
+  Sparkles,
+  UserPlus,
+} from 'lucide-react';
 import Navbar from '../../components/Navbar';
+
+const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] });
 
 // 🔹 TypeScript Interfaces
 interface QuestionDetail {
@@ -151,7 +165,7 @@ function ArticlesContent() {
     if (fieldOfStudyFromUrl) fieldOfStudy.current = fieldOfStudyFromUrl;
 
     initData();
-    startAvatarProcess();
+    startAvatarProcess(cachedTopic);
 
     // Prevent secondary default right-click popups
     const handleContextMenu = (e: MouseEvent) => e.preventDefault();
@@ -419,7 +433,8 @@ function ArticlesContent() {
   };
 
   // 🔹 Avatar Engine Setup
-  const startAvatarProcess = () => {
+  // `topic` state isn't updated yet when this runs on mount, so the career name is passed in
+  const startAvatarProcess = (knownTopic: string) => {
     if (fieldOfStudy.current) {
       fetch("https://www.lifepage.in/n/api/generateCareerAvatar", {
         method: "POST",
@@ -441,46 +456,48 @@ function ArticlesContent() {
         .then(res => res.json())
         .then(data => {
           const avatarPath = data?.data?.[0]?.avatar;
+          // Direct links have no cached topic; getAvatar returns it for the session
+          const careerName = knownTopic || data?.data?.[0]?.topic?.trim() || '';
+          if (!knownTopic && careerName) setTopic(careerName);
+
           if (data.success === 1 && avatarPath) {
             updateImage(avatarPath);
-          } else {
-            generateAvatar();
+          } else if (careerName) {
+            generateAvatar(careerName);
           }
         });
     }
   };
 
-  const generateAvatar = () => {
-    const prompt = `Create a high-quality 3D animated character illustration representing a professional ${topic}...`;
+  const generateAvatar = (careerName: string) => {
+    const prompt = `Create a high-quality 3D animated character illustration representing a professional ${careerName}...`;
     fetch("https://www.lifepage.in/n/api/avatar", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        careerName: topic,
+        careerName,
         prompt: prompt,
         session_id: profileId.current
       })
     })
       .then(res => res.json())
-      .then(() => {
-        setTimeout(() => {
-          fetch("https://www.lifepage.in/n/api/getAvatar", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ id: profileId.current })
-          })
-            .then(res => res.json())
-            .then(data => {
-              const avatarPath = data?.data?.[0]?.avatar;
-              if (data.success === 1 && avatarPath) updateImage(avatarPath);
-            });
-        }, 50000);
-      });
+      .then(data => {
+        // The API responds only after the image is generated and saved, and returns the updated session row
+        const avatarPath = data?.data?.[0]?.avatar;
+        if (data.success === 1 && avatarPath) {
+          updateImage(avatarPath);
+        } else {
+          console.error("Avatar generation failed:", data?.message, data?.error);
+        }
+      })
+      .catch(err => console.error("Avatar API error:", err));
   };
 
   const updateImage = (avatarPath: string) => {
-    const bucketBase = "https://storage.googleapis.com/lifepage-video-android/";
-    setProfileImageSrc(`${bucketBase}${avatarPath}?v=${Date.now()}`);
+    // Proxied through our own origin: the bucket has no CORS headers, which blocks the
+    // crossOrigin <img> and the html2canvas download
+    const path = avatarPath.split('/').map(encodeURIComponent).join('/');
+    setProfileImageSrc(`/api/bucket-image/${path}?v=${Date.now()}`);
   };
 
   // 🔹 Progress Calculation Utility
@@ -736,11 +753,24 @@ function ArticlesContent() {
         return `How much did you like ${qText}?`;
       };
 
+      const sliderFill = ((sliderValue - 1) / 9) * 100;
+
       return (
-        <div id="questionSection" className="w-full mt-4 p-5 bg-white rounded-xl shadow-inner text-left">
-          <h3 className="font-bold text-gray-800 text-lg mb-4">
-            {questionText(currentQuestion.que_category, currentQuestion.question)}
-          </h3>
+        <div id="questionSection" className="mt-6 w-full rounded-2xl border border-amber-100 bg-gradient-to-br from-[#fdf6ec] via-[#fffaf3] to-white p-5 text-left sm:p-6">
+          <div className="mb-4 flex items-start justify-between gap-4">
+            <div>
+              <span className="mb-1 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-[#B87523]">
+                <MessageCircleQuestion className="h-3.5 w-3.5" />
+                Rate this
+              </span>
+              <h3 className="text-base font-bold leading-snug text-gray-900 sm:text-lg">
+                {questionText(currentQuestion.que_category, currentQuestion.question)}
+              </h3>
+            </div>
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#C9822B] text-xl font-extrabold text-white shadow-[0_8px_20px_-8px_rgba(201,130,43,0.7)]">
+              {sliderValue}
+            </span>
+          </div>
 
           <input
             type="range"
@@ -749,11 +779,18 @@ function ArticlesContent() {
             step="1"
             value={sliderValue}
             onChange={(e) => setSliderValue(Number(e.target.value))}
-            className="w-full accent-[#E46C09]"
+            className="h-2 w-full cursor-pointer appearance-none rounded-full accent-[#C9822B]"
+            style={{ background: `linear-gradient(to right, #C9822B ${sliderFill}%, #e5e7eb ${sliderFill}%)` }}
           />
 
-          <div className="flex justify-between text-xs px-1 text-gray-500 mt-2 font-medium">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(val => <span key={val}>{val}</span>)}
+          <div className="mt-2 flex justify-between px-0.5 text-[11px] font-medium text-gray-400">
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(val => (
+              <span key={val} className={val === sliderValue ? 'font-bold text-[#C9822B]' : ''}>{val}</span>
+            ))}
+          </div>
+          <div className="mt-1 flex justify-between text-xs text-gray-500">
+            <span>Not at all</span>
+            <span>Absolutely</span>
           </div>
         </div>
       );
@@ -766,85 +803,126 @@ function ArticlesContent() {
 
   const section = sections[currentIndex];
   const activeContent = section?.content[contentIndex];
+  const careerName = topic || fieldOfStudy.current;
+  const isFirstStep = currentIndex === 0 && contentIndex === 0;
 
   return (
-    <div className="w-full min-h-screen bg-white font-sans box-border flex flex-col">
+    <div className="box-border flex flex-1 w-full flex-col bg-[linear-gradient(180deg,#f4f7fb_0%,#f8f9fb_55%,#fbf8f4_100%)]">
       {/* 🔹 Top Navbar */}
       <Navbar careerCount={count} />
 
       {/* Main Content Area */}
-      <main className="flex-1 w-full max-w-[1280px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-[400px_1fr] gap-12 max-[1024px]:grid-cols-1 max-[1024px]:gap-14">
+      <main className={`mx-auto w-full max-w-[1280px] flex-1 px-4 py-8 sm:px-6 lg:px-8 ${jakarta.className}`}>
+        <div className="grid grid-cols-[340px_1fr] items-start gap-8 max-[1024px]:grid-cols-1">
 
           {/* LEFT COLUMN */}
-          <div className="flex flex-col items-center gap-6 w-full">
-            <h4 className="text-xl font-bold text-gray-800">
-              Career in <span className="text-[#E46C09]">{topic || fieldOfStudy.current}</span>
-            </h4>
+          <aside className="flex w-full flex-col items-center gap-5 rounded-3xl border border-gray-100 bg-white p-6 text-center shadow-[0_10px_30px_-14px_rgba(15,23,42,0.18)] lg:sticky lg:top-24">
+            <div>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-100 bg-[#fdf6ec] px-3 py-1 text-xs font-medium text-[#B87523]">
+                <Compass className="h-3.5 w-3.5" />
+                Career Deep Dive
+              </span>
+              <h4 className="mt-3 text-xl font-extrabold tracking-[-0.01em] text-gray-900">
+                Career in <span className="text-[#C9822B]">{careerName || '...'}</span>
+              </h4>
+            </div>
 
-            {/* Profile Canvas Container */}
-            <div
-              id="avatar-download-target"
-              className="w-[220px] h-[220px] rounded-full overflow-hidden relative border border-[#323232]"
-              style={{ backgroundColor: '#e5e7eb' }}
-            >
-              <img
-                id="profileImage"
-                src={profileImageSrc}
-                crossOrigin="anonymous"
-                className="w-full h-full object-cover transition-all duration-600"
-                alt="Career Profile"
-              />
-
+            {/* Profile Canvas Container (captured by Download Avatar) */}
+            <div className="rounded-full bg-gradient-to-br from-[#C9822B] via-amber-300 to-[#C9822B] p-1 shadow-[0_12px_30px_-10px_rgba(201,130,43,0.6)]">
               <div
-                className="rounded-lg absolute bottom-0 left-1/2 -translate-x-1/2 w-[213px] h-[51px] flex flex-col justify-between items-center py-1 text-white z-10"
-                style={{ backgroundColor: '#363636' }}
+                id="avatar-download-target"
+                className="relative h-[220px] w-[220px] overflow-hidden rounded-full border-4 border-white"
+                style={{ backgroundColor: '#e5e7eb' }}
               >
-                <span className="text-[10px] text-[#E46C09] font-semibold">www.lifepage.in/ai</span>
-                <div className="w-[136px] h-[1px]" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
-                <span className="text-[12px] font-medium mb-1">
-                  {dreamIndexScore !== null
-                    ? `${savedName || "Career Seeker"} ${dreamIndexScore}%`
-                    : (savedName || "Career Seeker")}
-                </span>
+                <img
+                  id="profileImage"
+                  src={profileImageSrc}
+                  crossOrigin="anonymous"
+                  className="h-full w-full object-cover text-transparent transition-all duration-600"
+                  alt="Career Profile"
+                />
+
+                <div
+                  className="absolute bottom-0 left-1/2 z-10 flex h-[54px] w-[213px] -translate-x-1/2 flex-col items-center justify-between py-1.5 text-white"
+                  style={{ backgroundColor: 'rgba(17,24,39,0.88)' }}
+                >
+                  <span className="text-[10px] font-semibold text-[#E8A54B]">www.lifepage.in/ai</span>
+                  <div className="h-[1px] w-[136px]" style={{ backgroundColor: 'rgba(255,255,255,0.2)' }} />
+                  <span className="mb-1 text-[12px] font-semibold">
+                    {dreamIndexScore !== null
+                      ? `${savedName || "Career Seeker"} ${dreamIndexScore}%`
+                      : (savedName || "Career Seeker")}
+                  </span>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-row justify-center gap-4 w-full">
+            {dreamIndexScore !== null && (
+              <div className="w-full rounded-2xl bg-gradient-to-br from-[#111827] to-[#3b2a17] p-4 text-white">
+                <p className="text-xs font-medium uppercase tracking-wider text-amber-300">Your Dream Index</p>
+                <p className="mt-1 text-3xl font-extrabold">{dreamIndexScore}%</p>
+              </div>
+            )}
+
+            {/* Name + Download Controls */}
+            <div className="flex w-full flex-col gap-2.5">
+              {!isEditingName ? (
+                <button
+                  onClick={() => { setIsEditingName(true); setNameInputValue(savedName); }}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-800 shadow-sm transition hover:border-[#C9822B] hover:text-[#C9822B]"
+                >
+                  {savedName ? <Pencil className="h-4 w-4" /> : <UserPlus className="h-4 w-4" />}
+                  {savedName ? 'Edit Name' : 'Add Your Name'}
+                </button>
+              ) : (
+                <div className="flex w-full items-center gap-2 rounded-full border border-gray-200 bg-white py-1 pl-4 pr-1 focus-within:border-[#C9822B] focus-within:ring-4 focus-within:ring-amber-100">
+                  <input
+                    type="text"
+                    placeholder="Enter your name"
+                    value={nameInputValue}
+                    onChange={(e) => setNameInputValue(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSaveName(); }}
+                    autoFocus
+                    className="min-w-0 flex-1 bg-transparent py-1.5 text-sm text-gray-900 outline-none"
+                  />
+                  <button
+                    onClick={handleSaveName}
+                    className="rounded-full bg-[#C9822B] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#b4721f]"
+                  >
+                    Save
+                  </button>
+                </div>
+              )}
+
               {dreamIndexScore !== null && (
-                <button onClick={handleDownloadAvatar} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">
+                <button
+                  onClick={handleDownloadAvatar}
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#C9822B]"
+                >
+                  <Download className="h-4 w-4" />
                   Download Avatar
                 </button>
               )}
-
-              <div className="flex gap-2 items-center">
-                {!isEditingName ? (
-                  <button onClick={() => { setIsEditingName(true); setNameInputValue(savedName); }} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">
-                    {savedName ? 'Edit Name' : '+ Add Name'}
-                  </button>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <input type="text" placeholder="Enter your name" value={nameInputValue} onChange={(e) => setNameInputValue(e.target.value)} className="p-3 text-sm rounded-xl border border-black text-black bg-white focus:outline-none" />
-                    <button onClick={handleSaveName} className="py-3 px-[22px] bg-[#2196f3] text-white font-semibold rounded-xl hover:bg-blue-600 transition shadow-md text-sm">Save</button>
-                  </div>
-                )}
-              </div>
             </div>
-          </div>
+          </aside>
 
           {/* RIGHT COLUMN */}
-          <div className="bg-[#f9fafb] p-5 sm:p-10 rounded-[28px] shadow-sm border border-gray-100 box-border">
+          <section className="box-border rounded-3xl border border-gray-100 bg-white p-5 shadow-[0_10px_30px_-14px_rgba(15,23,42,0.18)] sm:p-8">
 
             {!isJourneyComplete ? (
               <div id="assessmentContent">
                 {isAiLoading && (
-                  <div className="text-center p-5 font-semibold text-[#E46C09] animate-pulse">
-                    AI is generating your career insights... please wait ({countdown}s)
+                  <div className="mb-6 flex items-center gap-3 rounded-2xl border border-amber-100 bg-[#fdf6ec] p-4 text-sm font-medium text-[#8a5a1c]">
+                    <span className="h-5 w-5 shrink-0 animate-spin rounded-full border-2 border-[#C9822B] border-t-transparent" />
+                    <span>
+                      AI is generating your career insights&hellip; please wait
+                      <span className="ml-1 font-bold text-[#C9822B]">({countdown}s)</span>
+                    </span>
                   </div>
                 )}
 
                 {/* Progress Steps Header */}
-                <div className="grid grid-cols-6 gap-2 mb-6 text-xs text-center font-bold">
+                <div className="mb-5 grid grid-cols-3 gap-2 sm:grid-cols-6">
                   {orbitConfig.map((config, idx) => {
                     const label = config.label.toLowerCase();
                     const sectionIndex = sections.findIndex(s => s.title.toLowerCase().startsWith(label));
@@ -854,94 +932,125 @@ function ArticlesContent() {
                     return (
                       <div
                         key={idx}
-                        className="flex-1 min-w-0 text-center px-1.5 py-1 sm:p-2 rounded-lg border font-bold text-xs sm:text-sm md:text-base leading-tight transition-all duration-300 break-words flex items-center justify-center"
-                        style={{
-                          backgroundColor: isCompleted ? '#E46C09' : '#ffffff',
-                          color: isCompleted ? '#ffffff' : isActive ? '#111827' : '#9ca3af',
-                          borderColor: isActive ? '#E46C09' : '#363636',
-                          borderWidth: isActive ? '2px' : '1px'
-                        }}
+                        className={`flex min-w-0 items-center justify-center gap-1.5 rounded-full px-2 py-2 text-xs font-semibold transition-all duration-300 sm:text-[13px] ${
+                          isCompleted
+                            ? 'bg-[#C9822B] text-white'
+                            : isActive
+                              ? 'bg-[#fdf6ec] text-[#B87523] ring-2 ring-[#C9822B]'
+                              : 'bg-gray-50 text-gray-400'
+                        }`}
                       >
-                        {config.label}
+                        {isCompleted ? (
+                          <Check className="h-3.5 w-3.5 shrink-0" strokeWidth={3} />
+                        ) : (
+                          <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${isActive ? 'bg-[#C9822B] text-white' : 'bg-gray-200 text-gray-500'}`}>
+                            {idx + 1}
+                          </span>
+                        )}
+                        <span className="truncate">{config.label}</span>
                       </div>
                     );
                   })}
                 </div>
 
                 {/* Slider Progress HUD */}
-                <div className="flex justify-between font-bold text-sm text-gray-500 mb-1">
-                  <span>Progress</span>
-                  <span className="text-gray-900">{percent}%</span>
+                <div className="mb-1.5 flex justify-between text-xs font-semibold">
+                  <span className="text-gray-500">Your progress</span>
+                  <span className="text-[#C9822B]">{percent}%</span>
                 </div>
-                <div className="h-3 bg-gray-200 rounded-full overflow-hidden mb-6">
-                  <div className="h-full bg-[#E46C09] transition-all duration-600" style={{ width: `${percent}%` }} />
+                <div className="mb-8 h-2 overflow-hidden rounded-full bg-gray-100">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-amber-400 to-[#C9822B] transition-all duration-600"
+                    style={{ width: `${percent}%` }}
+                  />
                 </div>
 
                 {activeContent && !activeContent.image && (
-                  <h1 className="text-2xl font-extrabold text-gray-900 leading-snug mb-5 max-sm:text-[20px]">
+                  <h1 className="mb-5 text-2xl font-extrabold leading-snug tracking-[-0.01em] text-gray-900 max-sm:text-[20px]">
                     {articleTitle}
                   </h1>
                 )}
 
-                {/* Sub-Card Grid Container */}
-                <div className="flex md:flex-row flex-col gap-5 items-start mt-4 mb-6">
-                  <div className="flex-1 w-full max-w-[700px] mx-auto">
-
-                    {activeContent?.image && (
-                      <div className="relative mb-6">
-                        {isAi.current && (
-                          <div className="absolute top-0 left-0 w-full bg-[#323232]/90 text-white p-3 font-semibold flex justify-between items-center text-sm rounded-t-lg">
-                            <span>[{section?.title}] {activeContent.subtitle}</span>
+                <div className="mx-auto w-full max-w-[760px]">
+                  {activeContent?.image && (
+                    <div className="relative mb-2">
+                      {isAi.current && (
+                        <div className="mb-3 inline-flex max-w-full items-center gap-2 rounded-full bg-gray-900 px-3.5 py-1.5 text-xs font-semibold text-white">
+                          <span className="rounded-full bg-[#C9822B] px-2 py-0.5 text-[10px] uppercase tracking-wider">{section?.title}</span>
+                          <span className="truncate">{activeContent.subtitle}</span>
+                        </div>
+                      )}
+                      <div className={`grid items-center gap-4 ${videoUrl && activeContent?.image ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                        {/* Left: YouTube Player */}
+                        {videoUrl && (
+                          <div className="aspect-video w-full overflow-hidden rounded-2xl bg-black shadow-md">
+                            <iframe
+                              src={getYouTubeEmbedUrl(videoUrl)}
+                              title="Career Video"
+                              className="h-full w-full border-0"
+                              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                              allowFullScreen
+                            />
                           </div>
                         )}
-                        <div className={`grid gap-4 items-center ${videoUrl && activeContent?.image ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
-                          {/* Left: YouTube Player */}
-                          {videoUrl && (
-                            <div className="w-full aspect-video rounded-lg overflow-hidden shadow-md bg-black">
-                              <iframe
-                                src={getYouTubeEmbedUrl(videoUrl)}
-                                title="Career Video"
-                                className="w-full h-full border-0"
-                                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                allowFullScreen
-                              />
-                            </div>
-                          )}
 
-                          {/* Right: Step Image */}
-                          {activeContent?.image && (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <img
-                                src={activeContent.image}
-                                className={`w-full block rounded-lg shadow-md object-fit ${videoUrl ? 'aspect-video max-h-[400px]' : 'h-auto max-h-[500px]'
-                                  }`}
-                                alt="Step visual"
-                              />
-                            </div>
-                          )}
-                        </div>
+                        {/* Right: Step Image */}
+                        {activeContent?.image && (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <img
+                              src={activeContent.image}
+                              className={`block w-full rounded-2xl object-contain shadow-md ${videoUrl ? 'aspect-video max-h-[400px]' : 'h-auto max-h-[500px]'}`}
+                              alt="Step visual"
+                            />
+                          </div>
+                        )}
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {getDynamicQuestionElement()}
-                  </div>
+                  {/* Article Text */}
+                  {activeContent && (
+                    <article id="bottomTextContainer" className="mt-6 text-left">
+                      {activeContent.subtitle && (
+                        <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-gray-900">
+                          <span className="h-5 w-1 rounded-full bg-[#C9822B]" />
+                          {activeContent.subtitle}
+                        </h3>
+                      )}
+                      <p className="whitespace-pre-wrap text-[15px] leading-[1.85] text-gray-600">
+                        {activeContent.text}
+                      </p>
+                    </article>
+                  )}
+
+                  {getDynamicQuestionElement()}
                 </div>
 
-                <div className="flex justify-between items-center gap-6 mt-6">
-                  <button onClick={handleBack} className={`py-3 px-6 bg-[#363636] text-white font-semibold rounded-xl transition hover:bg-gray-800 shadow-sm text-sm ${(currentIndex === 0 && contentIndex === 0) ? 'invisible' : 'visible'}`}>← Back</button>
+                {/* Navigation */}
+                <div className="mt-8 flex items-center justify-between gap-4 border-t border-gray-100 pt-6">
+                  <button
+                    onClick={handleBack}
+                    className={`inline-flex items-center gap-2 rounded-full border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-900 hover:bg-gray-900 hover:text-white ${isFirstStep ? 'invisible' : 'visible'}`}
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </button>
                   {!isCompletedStep() ? (
                     <button
                       onClick={handleNext}
-                      className="py-3 px-6 bg-[#E46C09] text-white font-semibold rounded-xl transition hover:bg-[#c95d05] shadow-sm text-sm"
+                      className="group inline-flex items-center gap-2 rounded-full bg-[#C9822B] px-6 py-2.5 text-sm font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#b4721f] hover:shadow-lg"
                     >
-                      Next →
+                      Next
+                      <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
                     </button>
                   ) : (
                     <button
                       onClick={calculateSelfAssessment}
-                      className="py-3 px-6 bg-[#E46C09] text-white font-semibold rounded-xl transition hover:bg-[#c95d05] shadow-md text-sm animate-bounce"
+                      className="relative inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#C9822B] to-orange-500 px-6 py-3 text-sm font-semibold text-white shadow-[0_10px_25px_-8px_rgba(201,130,43,0.8)] transition hover:-translate-y-0.5"
                     >
-                      Calculate Self Assessment
+                      <span className="absolute inset-0 animate-ping rounded-full bg-[#C9822B]/30" />
+                      <Sparkles className="relative h-4 w-4" />
+                      <span className="relative">Calculate Self Assessment</span>
                     </button>
                   )}
                 </div>
@@ -950,29 +1059,15 @@ function ArticlesContent() {
               <div className="w-full">
                 <iframe
                   src={certificateUrl}
-                  className="w-full h-[800px] border-none rounded-[20px] bg-white shadow-inner"
+                  className="h-[800px] w-full rounded-2xl border-none bg-white"
                   title="Self Assessment Certificate"
                 />
               </div>
             )}
 
-          </div>
+          </section>
 
         </div>
-
-        {/* Expanded Bottom Text Subtitle details */}
-        {activeContent && (
-          <div id="bottomTextContainer" className="mt-10 max-w-[1240px] mx-auto p-8 bg-[#363636] text-white rounded-2xl text-left shadow-lg">
-            {activeContent.subtitle && (
-              <h3 className="text-center font-bold text-xl text-[#E46C09] mb-4">
-                {activeContent.subtitle}
-              </h3>
-            )}
-            <p className="text-gray-200 text-md leading-[1.8] whitespace-pre-wrap">
-              {activeContent.text}
-            </p>
-          </div>
-        )}
       </main>
     </div>
   );
@@ -980,7 +1075,14 @@ function ArticlesContent() {
 
 export default function ArticlesPage() {
   return (
-    <Suspense fallback={<div className="flex justify-center items-center min-h-screen font-sans text-[#E46C09] font-bold animate-pulse">Loading assessments...</div>}>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center gap-3 bg-[#f6f8fb] text-sm font-medium text-gray-500">
+          <span className="h-5 w-5 animate-spin rounded-full border-2 border-[#C9822B] border-t-transparent" />
+          Loading assessments...
+        </div>
+      }
+    >
       <ArticlesContent />
     </Suspense>
   );

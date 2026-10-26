@@ -84,7 +84,7 @@ export default function BalanceReportPage() {
   }, [filterType, searchTerm]);
 
   return (
-    <div className="min-h-screen w-full bg-[#181818] text-gray-100 flex flex-col font-sans">
+    <div className="flex-1 w-full bg-[#181818] text-gray-100 flex flex-col font-sans">
       <Navbar />
 
       <main className="flex-1 w-full max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-8">

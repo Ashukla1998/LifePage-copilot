@@ -74,7 +74,7 @@ export default function CareerSessionsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-12">
+    <div className="flex-1 bg-slate-950 text-slate-100 p-6 md:p-12">
       <header className="max-w-7xl mx-auto mb-10 text-center md:text-left">
         <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-white">
           Career Exploration Sessions

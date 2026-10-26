@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, forwardRef } from "react";
-import Image from "next/image";
+import { ArrowRight, Lightbulb, Search, Sparkles } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface UserEventBody {
@@ -13,10 +13,11 @@ interface UserEventBody {
 interface HomeFormBoxProps {
   careerInput: string;
   setCareerInput: (value: string) => void;
+  popular?: string[];
 }
 
 const HomeFormBox = forwardRef<HTMLInputElement, HomeFormBoxProps>(
-  ({ careerInput, setCareerInput }, ref) => {
+  ({ careerInput, setCareerInput, popular = [] }, ref) => {
     const router = useRouter();
 
     useEffect(() => {
@@ -91,61 +92,59 @@ const HomeFormBox = forwardRef<HTMLInputElement, HomeFormBoxProps>(
     };
 
     return (
-      <div className="w-full max-w-[500px] rounded-sm border border-black bg-[#ffc000] p-6 text-center text-[#262626] shadow-sm sm:p-8 shrink-0">
-        <h2 className="mb-4 text-lg font-bold leading-[1.3] sm:text-xl">
-          Which Career are you interested in?
-        </h2>
-
-        {/* Form */}
-        <form onSubmit={handleExplore}>
+      <div className="w-full rounded-2xl border border-white bg-white/95 p-4 shadow-[0_12px_40px_-12px_rgba(15,23,42,0.15)] backdrop-blur sm:px-5 sm:py-5">
+        {/* Search */}
+        <form
+          onSubmit={handleExplore}
+          className="flex items-center gap-3 rounded-full border border-gray-200 bg-white py-2 pl-5 pr-2 transition focus-within:border-[#C9822B] focus-within:ring-4 focus-within:ring-amber-100"
+        >
+          <Search className="h-5 w-5 shrink-0 text-gray-400" />
           <input
             ref={ref}
             type="text"
             required
-            placeholder="e.g. Website Designer, Data Analyst"
+            placeholder="Search any career, skill or field..."
             value={careerInput}
             onChange={(e) => setCareerInput(e.target.value)}
-            className="mb-4 w-full rounded-sm border border-white bg-white p-2.5 text-center text-sm shadow-[inset_0_1px_3px_rgba(0,0,0,0.2)] outline-none focus:border-blue-500 sm:p-3"
+            className="min-w-0 flex-1 bg-transparent py-2 text-sm text-gray-800 outline-none placeholder:text-gray-400 sm:text-base"
           />
-
           <button
             type="submit"
-            className="inline-flex w-full sm:w-[60%] items-center justify-center gap-2 rounded bg-[#2196f3] px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#1e88e5]"
+            aria-label="Explore"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#C9822B] text-white shadow-md transition hover:scale-105 hover:bg-[#b4721f]"
           >
-            Explore
-            <Image
-              src="/Newpath.png"
-              alt="Explore"
-              width={18}
-              height={18}
-            />
+            <ArrowRight className="h-5 w-5" />
           </button>
         </form>
 
-        {/* Divider */}
-        <div className="relative my-6">
-          <hr className="border-black/20" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="bg-[#ffc000] px-3 text-xs font-semibold text-gray-700">
-              OR
+        {/* Discovery */}
+        <div className="mt-4 flex flex-col items-start gap-3 rounded-xl border border-amber-100 bg-gradient-to-r from-[#fdf6ec] via-[#fffaf3] to-white p-3 text-left sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white text-[#C9822B] shadow-[0_4px_12px_rgba(201,130,43,0.18)]">
+              <Lightbulb className="h-5 w-5" />
+              <span className="absolute -right-0.5 -top-0.5 h-2.5 w-2.5 animate-pulse rounded-full bg-[#C9822B] ring-2 ring-white" />
             </span>
+            <div className="leading-tight">
+              <p className="text-sm font-semibold text-gray-900">
+                Not sure where to start?
+              </p>
+              <p className="mt-0.5 text-xs text-gray-500">
+                Play quick career duels and discover what suits you
+              </p>
+            </div>
           </div>
-        </div>
 
-        {/* Discovery Button */}
-        <button
-          type="button"
-          onClick={handleDiscovery}
-          className="inline-flex w-full sm:w-[60%] items-center justify-center gap-2 rounded bg-[#363636] px-5 py-2.5 text-sm font-bold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-black"
-        >
-          I Have No Idea
-          <Image
-            src="/Newresearch.png"
-            alt="Discovery"
-            width={18}
-            height={18}
-          />
-        </button>
+          <button
+            type="button"
+            onClick={handleDiscovery}
+            className="group inline-flex w-full shrink-0 items-center justify-center gap-2 rounded-full bg-gray-900 px-4 py-2 text-xs font-semibold text-white shadow-md transition hover:-translate-y-0.5 hover:bg-[#C9822B] hover:shadow-lg sm:w-auto sm:text-sm"
+          >
+            <Sparkles className="h-4 w-4 text-amber-300 transition group-hover:text-white" />
+            I Have No Idea
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+          </button>
+        </div>
+        
       </div>
     );
   }
