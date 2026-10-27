@@ -136,7 +136,7 @@ function LoginContent() {
 
                 // Delay navigation briefly so user sees the toast, or let it persist via RootLayout
                 setTimeout(() => {
-                    router.push('/aka-member');
+                    router.push('/aka-dashboard');
                 }, 800);
             } else {
                 const msg = data.message || 'Login failed! Please check your credentials.';
