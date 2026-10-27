@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { FiX, FiPlus, FiLoader } from 'react-icons/fi';
+import { SERVICE_OPTIONS, CURRENT_PROJECT_END_YEAR, parseServices, joinServices } from '../constants';
 
 export interface AkaProjectsPayload {
   title: string;
@@ -98,6 +99,15 @@ export default function AddProjectModal({
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+  };
+
+  const selectedServices = parseServices(formData.service);
+
+  const handleServiceToggle = (opt: string) => {
+    const next = selectedServices.includes(opt)
+      ? selectedServices.filter((s) => s !== opt)
+      : [...selectedServices, opt];
+    setFormData((prev) => ({ ...prev, service: joinServices(next) }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -205,15 +215,18 @@ export default function AddProjectModal({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Progress Status <span className="text-rose-500">*</span>
+                  Progress (%) <span className="text-rose-500">*</span>
                 </label>
                 <input
                   required
-                  type="text"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="any"
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  placeholder="e.g. 100% completed"
+                  placeholder="e.g. 100"
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                 />
               </div>
@@ -239,45 +252,54 @@ export default function AddProjectModal({
                 <label className="block text-xs font-semibold text-slate-600 mb-1">
                   Services Provided <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  required
-                  type="text"
-                  name="service"
-                  value={formData.service}
-                  onChange={handleChange}
-                  placeholder="e.g. Architecture | Interior"
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
-                />
+                <div className="flex flex-wrap gap-x-4 gap-y-2 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg">
+                  {SERVICE_OPTIONS.map((opt) => (
+                    <label key={opt} className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        required={selectedServices.length === 0}
+                        checked={selectedServices.includes(opt)}
+                        onChange={() => handleServiceToggle(opt)}
+                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 transition"
+                      />
+                      {opt}
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Land Size <span className="text-rose-500">*</span>
+                  Land Size (sq ft) <span className="text-rose-500">*</span>
                 </label>
                 <input
                   required
-                  type="text"
+                  type="number"
+                  min={0}
+                  step="any"
                   name="size"
                   value={formData.size}
                   onChange={handleChange}
-                  placeholder="e.g. 20 acres"
+                  placeholder="e.g. 871200"
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Built-up Area <span className="text-rose-500">*</span>
+                  Built-up Area (sq ft) <span className="text-rose-500">*</span>
                 </label>
                 <input
                   required
-                  type="text"
+                  type="number"
+                  min={0}
+                  step="any"
                   name="buildup"
                   value={formData.buildup}
                   onChange={handleChange}
-                  placeholder="e.g. 12,00,000 sq.ft."
+                  placeholder="e.g. 1200000"
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                 />
               </div>
@@ -309,9 +331,12 @@ export default function AddProjectModal({
                   name="end_year"
                   value={formData.end_year}
                   onChange={handleChange}
-                  placeholder="e.g. 2023"
+                  placeholder="e.g. 2023 (2100 if ongoing)"
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                 />
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Write {CURRENT_PROJECT_END_YEAR} for a current (ongoing) project.
+                </p>
               </div>
             </div>
 

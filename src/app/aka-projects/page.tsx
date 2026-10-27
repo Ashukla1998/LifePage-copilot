@@ -400,9 +400,11 @@ export default function AkaProjectsPage() {
         setIsAddModalOpen(false);
       } else {
         alert(result.message || 'Failed to create project');
+        throw new Error(result.message || 'Failed to create project');
       }
     } catch (err) {
       console.error('Error adding project:', err);
+      throw err; // keep the modal open so the form isn't lost
     }
   };
 
@@ -469,9 +471,11 @@ export default function AkaProjectsPage() {
         setSelectedProject(null);
       } else {
         alert(result.message || 'Failed to update project');
+        throw new Error(result.message || 'Failed to update project');
       }
     } catch (err) {
       console.error('Error updating project:', err);
+      throw err; // keep the modal open so the form isn't lost
     }
   };
 
