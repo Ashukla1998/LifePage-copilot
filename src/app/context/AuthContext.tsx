@@ -18,6 +18,8 @@ export interface UserData {
 
 interface AuthContextType {
   isLoggedIn: boolean;
+  // True once the stored session has been read; guards must wait for this
+  isAuthReady: boolean;
   user: UserData | null;
   login: (userData: UserData) => void;
   logout: () => void;
@@ -25,6 +27,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({
   isLoggedIn: false,
+  isAuthReady: false,
   user: null,
   login: () => {},
   logout: () => {},
@@ -33,6 +36,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const [user, setUser] = useState<UserData | null>(null);
+  const [isAuthReady, setIsAuthReady] = useState<boolean>(false);
 
   // Load user from storage on initial page render
   useEffect(() => {
@@ -46,6 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (e) {
       console.error('Failed to parse stored user data', e);
     }
+    setIsAuthReady(true);
   }, []);
 
   const login = (userData: UserData) => {
@@ -63,7 +68,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ isLoggedIn, user, login, logout }}>
+    <AuthContext.Provider value={{ isLoggedIn, isAuthReady, user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

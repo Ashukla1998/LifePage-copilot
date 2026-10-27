@@ -12,6 +12,7 @@ import {
 import 'react-international-phone/style.css';
 // import Navbar from '../../components/Navbar';
 import { useAuth } from '../context/AuthContext';
+import { VALID_MEMBER_ID } from './AkaGuard';
 import { toast } from 'sonner';
 import { GrClose } from "react-icons/gr";
 
@@ -23,7 +24,6 @@ function LoginContent() {
     const [showPin, setShowPin] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [errorMessage, setErrorMessage] = useState<string>('');
-    const VALID_MEMBER_ID = '6d318c2e86f30a13cc0f6266a73514a0';
     const pinInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
     // Handle individual digit input and auto-focus next box
@@ -125,12 +125,16 @@ function LoginContent() {
             const data = await res.json();
 
             if (data.success === 1) {
-                login(data.data || data.user);
-                
-                if(data.data && data.data.memberid !== VALID_MEMBER_ID) {
-                    toast.error('You are not a valid member. Please contact support.');
+                const userData = data.data || data.user;
+
+                if (userData?.memberid !== VALID_MEMBER_ID) {
+                    const msg = 'You are not a valid member. Please contact support.';
+                    setErrorMessage(msg);
+                    toast.error(msg);
                     return;
                 }
+
+                login(userData);
 
                 toast.success('Login successful! Redirecting...');
 
