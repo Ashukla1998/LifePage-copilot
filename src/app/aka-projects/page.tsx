@@ -443,6 +443,7 @@ export default function AkaProjectsPage() {
         gallerypath: formData.gallerypath,
         category: formData.category,
         is_active: formData.is_active,
+        show_in_slider: formData.show_in_slider,
         cover: base64Cover,
         new_images: processedGalleryImages,
       };

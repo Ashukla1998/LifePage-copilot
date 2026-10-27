@@ -26,6 +26,7 @@ export interface AkaProjectsEditFormData {
   gallerypath: string;
   category: string;
   is_active: boolean;
+  show_in_slider: boolean;
   cover: File | null; // Null if retaining existing image
   project_images: AkaProjectImageInput[];
 }
@@ -48,6 +49,7 @@ const INITIAL_FORM_STATE: AkaProjectsEditFormData = {
   gallerypath: '',
   category: '',
   is_active: true,
+  show_in_slider: false,
   cover: null,
   project_images: [],
   start_year: '',
@@ -78,6 +80,7 @@ export default function EditProjectModal({
         gallerypath: project.gallerypath || '',
         category: project.category || '',
         is_active: project.is_active ?? true,
+        show_in_slider: project.show_in_slider ?? false,
         start_year: project.start_year || '',
         end_year: project.end_year || '',
         cover: null,
@@ -585,6 +588,21 @@ export default function EditProjectModal({
                 <p className="text-[11px] text-slate-500">
                   Visible to users across the platform when enabled.
                 </p>
+              </div>
+            </label>
+
+            {/* Home Slider Toggle */}
+            <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200/80 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="show_in_slider"
+                checked={formData.show_in_slider}
+                onChange={handleChange}
+                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 transition"
+              />
+              <div>
+                <span className="font-semibold text-slate-800 text-xs">Show in Home Slider</span>
+                <p className="text-[11px] text-slate-500">Display this project&apos;s cover image in the home page slider.</p>
               </div>
             </label>
           </div>

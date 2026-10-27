@@ -12,6 +12,7 @@ export interface AkaProjects {
   gallerypath:string;
   category: string;
   is_active: boolean;
+  show_in_slider: boolean;
   cover: string;
   project_images: AkaProjectImageInput[];
   start_year: string;
@@ -29,5 +30,6 @@ export interface AkaProjectsFormData {
   gallerypath:string;
   category: string;
   is_active: boolean;
+  show_in_slider: boolean;
   cover: File | null;
 }
