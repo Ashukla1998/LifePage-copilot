@@ -13,6 +13,7 @@ export interface AkaProjects {
   category: string;
   is_active: boolean;
   show_in_slider: boolean;
+  slider_order: number | null;
   cover: string;
   project_images: AkaProjectImageInput[];
   start_year: string;

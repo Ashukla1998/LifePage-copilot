@@ -330,11 +330,12 @@
 
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
-import { FiEdit2, FiPlus, FiSearch, FiCheck, FiSlash } from 'react-icons/fi';
+import { FiEdit2, FiPlus, FiSearch, FiCheck, FiSlash, FiLayers } from 'react-icons/fi';
 import { AkaProjects } from './types';
 import AddProjectModal, { AkaProjectsPayload } from './components/AddProject';
 import EditProjectModal, { AkaProjectsEditFormData } from './components/EditProjectModal';
 import StatusModal from './components/StatusModal';
+import SliderOrderModal, { SliderOrderItem } from './components/SliderOrderModal';
 
 // Helper to convert File to base64
 const fileToBase64 = (file: File): Promise<string> => {
@@ -353,6 +354,7 @@ export default function AkaProjectsPage() {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isStatusModalOpen, setIsStatusModalOpen] = useState(false);
+  const [isSliderModalOpen, setIsSliderModalOpen] = useState(false);
 
   // Fetch initial project list
   useEffect(() => {
@@ -485,7 +487,15 @@ export default function AkaProjectsPage() {
     );
   };
 
+  const handleSliderOrderSaved = (items: SliderOrderItem[]) => {
+    const orderMap = new Map(items.map((i) => [i.projectid, i.slider_order]));
+    setprojects((prev) =>
+      prev.map((p) => (orderMap.has(p.projectid) ? { ...p, slider_order: orderMap.get(p.projectid)! } : p))
+    );
+  };
+
   const ProjectList = Array.isArray(projects) ? projects : [];
+  const sliderCount = ProjectList.filter((p) => p.show_in_slider).length;
   const filteredprojects = ProjectList.filter(
     (m) =>
       m.title?.toLowerCase().includes(search.toLowerCase()) ||
@@ -507,14 +517,26 @@ export default function AkaProjectsPage() {
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsAddModalOpen(true)}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition-all duration-150 hover:shadow active:scale-95"
-          >
-            <FiPlus className="text-base" />
-            Add Project
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsSliderModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-sm font-semibold shadow-sm transition-all duration-150 hover:shadow active:scale-95"
+            >
+              <FiLayers className="text-base" />
+              Slider Order
+              <span className="px-1.5 py-0.5 rounded-md bg-slate-100 text-xs text-slate-500">{sliderCount}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setIsAddModalOpen(true)}
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold shadow-sm transition-all duration-150 hover:shadow active:scale-95"
+            >
+              <FiPlus className="text-base" />
+              Add Project
+            </button>
+          </div>
         </div>
 
         {/* Card Table Container */}
@@ -643,6 +665,15 @@ export default function AkaProjectsPage() {
                           />
                           {project.is_active ? 'Active' : 'Inactive'}
                         </span>
+                        {project.show_in_slider && (
+                          <span
+                            className="mt-1.5 flex w-fit items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-100"
+                            title="Position in home slider"
+                          >
+                            <FiLayers className="w-3 h-3" />
+                            {project.slider_order ? `Slider #${project.slider_order}` : 'Slider'}
+                          </span>
+                        )}
                       </td>
 
                       {/* Actions */}
@@ -677,7 +708,7 @@ export default function AkaProjectsPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={7} className="px-6 py-12 text-center text-sm text-slate-400">
+                    <td colSpan={9} className="px-6 py-12 text-center text-sm text-slate-400">
                       No projects found matching &quot;{search}&quot;.
                     </td>
                   </tr>
@@ -709,6 +740,13 @@ export default function AkaProjectsPage() {
         project={selectedProject}
         onClose={() => setIsStatusModalOpen(false)}
         onSuccess={handleStatusSuccess}
+      />
+
+      <SliderOrderModal
+        isOpen={isSliderModalOpen}
+        projects={ProjectList}
+        onClose={() => setIsSliderModalOpen(false)}
+        onSaved={handleSliderOrderSaved}
       />
     </main>
   );
