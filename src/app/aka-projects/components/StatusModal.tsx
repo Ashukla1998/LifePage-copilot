@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { FiPower, FiCheckCircle, FiLoader } from 'react-icons/fi';
 import { AkaProjects } from '../types';
-import { API_BASE } from '@/lib/api';
 
 interface StatusModalProps {
   isOpen: boolean;
@@ -12,7 +11,7 @@ interface StatusModalProps {
   onSuccess: (updatedProject: AkaProjects) => void;
 }
 
-const EDIT_API_URL = `${API_BASE}/EditProject`;
+const EDIT_API_URL = 'https://www.lifepage.in/n/api/EditProject';
 
 export default function StatusModal({
   isOpen,
@@ -32,34 +31,39 @@ export default function StatusModal({
     setLoading(true);
 
     try {
-      // Same payload as the Edit form, with only is_active flipped; null cover / no new images keep the existing ones
+      // Same payload shape as handleEditProject; existing values are resent unchanged,
+      // cover: null keeps the current cover and new_images: [] adds no gallery images
       const payload = {
         projectid: project.projectid,
         title: project.title,
         description: project.description,
         location: project.location,
-        size: project.size,
-        buildup: project.buildup,
+        size: String(project.size ?? ''),
+        buildup: String(project.buildup ?? ''),
         service: project.service,
-        status: project.status,
-        start_year: project.start_year,
-        end_year: project.end_year,
+        status: String(project.status ?? ''),
+        start_year: String(project.start_year ?? ''),
+        end_year: String(project.end_year ?? ''),
         gallerypath: project.gallerypath,
         category: project.category,
         is_active: willBeActive,
+        show_in_slider: project.show_in_slider,
         cover: null,
         new_images: [],
       };
 
       const res = await fetch(EDIT_API_URL, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(payload),
       });
+
       const result = await res.json();
 
-      if (res.ok && result.success === 1) {
-        onSuccess({ ...project, ...(result.data || {}), is_active: willBeActive });
+      if (result.success === 1) {
+        onSuccess({ ...project, ...result.data, is_active: willBeActive });
         onClose();
       } else {
         setErrorMsg(result.message || 'Failed to update project status.');

@@ -6,7 +6,6 @@ import { FiEdit2, FiPlus, FiSearch, FiCheck, FiSlash } from 'react-icons/fi';
 import { AkaMember } from './types';
 import MemberModal from './components/MemberModal';
 import StatusModal from './components/StatusModal';
-import { API_BASE } from '@/lib/api';
 
 const INITIAL_MEMBERS: AkaMember[] = [
   {
@@ -55,7 +54,7 @@ export default function AkaMemberPage() {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        const response = await fetch(`${API_BASE}/GetAkaMember`);
+        const response = await fetch('https://www.lifepage.in/n/api/GetAkaMember');
 
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -311,16 +310,12 @@ export default function AkaMemberPage() {
         </div>
       </div>
 
-      {/* Mounted only while open (keyed per member) so the form starts fresh each time */}
-      {isMemberModalOpen && (
-        <MemberModal
-          key={selectedMember?.memberid ?? 'new'}
-          isOpen
-          initialData={selectedMember}
-          onClose={() => setIsMemberModalOpen(false)}
-          onSuccess={handleMemberSuccess}
-        />
-      )}
+      <MemberModal
+        isOpen={isMemberModalOpen}
+        initialData={selectedMember}
+        onClose={() => setIsMemberModalOpen(false)}
+        onSuccess={handleMemberSuccess}
+      />
 
       <StatusModal
         isOpen={isStatusModalOpen}

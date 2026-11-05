@@ -5,17 +5,19 @@ export interface AkaProjects {
   title: string;
   description: string;
   location: string;
-  size  : string;
-  buildup: string;
+  size  : string | number | null;
+  buildup: string | number | null;
   service: string;
-  status : string;
+  status : string | number | null;
   gallerypath:string;
   category: string;
   is_active: boolean;
+  show_in_slider: boolean;
+  slider_order: number | null;
   cover: string;
   project_images: AkaProjectImageInput[];
-  start_year: string;
-  end_year: string;
+  start_year: string | number | null;
+  end_year: string | number | null;
 }
 
 export interface AkaProjectsFormData {
@@ -29,5 +31,6 @@ export interface AkaProjectsFormData {
   gallerypath:string;
   category: string;
   is_active: boolean;
+  show_in_slider: boolean;
   cover: File | null;
 }

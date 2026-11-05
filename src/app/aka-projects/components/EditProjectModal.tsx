@@ -3,6 +3,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { FiX, FiCheck, FiLoader, FiPlus, FiTrash2, FiImage } from 'react-icons/fi';
 import { AkaProjects } from '../types';
+import {
+  SERVICE_OPTIONS,
+  CURRENT_PROJECT_END_YEAR,
+  parseServices,
+  joinServices,
+  toNumericString,
+} from '../constants';
 
 export interface AkaProjectImageInput {
   id: string; // Temporary ID for client tracking/keys
@@ -26,6 +33,7 @@ export interface AkaProjectsEditFormData {
   gallerypath: string;
   category: string;
   is_active: boolean;
+  show_in_slider: boolean;
   cover: File | null; // Null if retaining existing image
   project_images: AkaProjectImageInput[];
 }
@@ -48,37 +56,12 @@ const INITIAL_FORM_STATE: AkaProjectsEditFormData = {
   gallerypath: '',
   category: '',
   is_active: true,
+  show_in_slider: false,
   cover: null,
   project_images: [],
   start_year: '',
   end_year: '',
 };
-
-function toFormData(project: AkaProjects | null): AkaProjectsEditFormData {
-  if (!project) return INITIAL_FORM_STATE;
-  return {
-    title: project.title || '',
-    description: project.description || '',
-    location: project.location || '',
-    size: project.size || '',
-    buildup: project.buildup || '',
-    service: project.service || '',
-    status: project.status || '',
-    gallerypath: project.gallerypath || '',
-    category: project.category || '',
-    is_active: project.is_active ?? true,
-    start_year: project.start_year || '',
-    end_year: project.end_year || '',
-    cover: null,
-    project_images: (project.project_images || []).map((img) => ({
-      id: crypto.randomUUID(),
-      file: null,
-      image_location: img.image_location,
-      order_no: img.order_no,
-      description: img.description || '',
-    })),
-  };
-}
 
 export default function EditProjectModal({
   isOpen,
@@ -86,16 +69,47 @@ export default function EditProjectModal({
   onClose,
   onSubmit,
 }: EditProjectModalProps) {
-  // The page mounts this modal fresh (keyed by project) each time it opens, so state starts from the project
-  const [formData, setFormData] = useState<AkaProjectsEditFormData>(() => toFormData(project));
-  const [previewUrl, setPreviewUrl] = useState<string | null>(project?.cover || null);
+  const [formData, setFormData] = useState<AkaProjectsEditFormData>(INITIAL_FORM_STATE);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Sync state when project changes or modal opens
+  useEffect(() => {
+    if (isOpen && project) {
+      setFormData({
+        title: project.title || '',
+        description: project.description || '',
+        location: project.location || '',
+        // Legacy free-text values that aren't plain numbers are cleared so they must be re-entered
+        size: toNumericString(String(project.size ?? '')),
+        buildup: toNumericString(String(project.buildup ?? '')),
+        service: joinServices(parseServices(project.service || '')),
+        status: toNumericString(String(project.status ?? '')),
+        gallerypath: project.gallerypath || '',
+        category: project.category || '',
+        is_active: project.is_active ?? true,
+        show_in_slider: project.show_in_slider ?? false,
+        start_year: String(project.start_year ?? ''),
+        end_year: String(project.end_year ?? ''),
+        cover: null,
+        project_images: (project.project_images || []).map((img) => ({
+          id: crypto.randomUUID(),
+          file: null,
+          image_location: img.image_location,
+          order_no: img.order_no,
+          description: img.description || '',
+        })),
+      });
+      setPreviewUrl(project.cover || null);
+    } else {
+      setPreviewUrl(null);
+      setFormData(INITIAL_FORM_STATE);
+    }
+  }, [isOpen, project]);
   
   // Clean up blob URLs on unmount (replaced/removed ones are revoked in their handlers)
   const blobUrlsRef = useRef({ previewUrl, images: formData.project_images });
-  useEffect(() => {
-    blobUrlsRef.current = { previewUrl, images: formData.project_images };
-  });
+  blobUrlsRef.current = { previewUrl, images: formData.project_images };
   useEffect(() => {
     return () => {
       const { previewUrl, images } = blobUrlsRef.current;
@@ -122,6 +136,15 @@ export default function EditProjectModal({
     } else {
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
+  };
+
+  const selectedServices = parseServices(formData.service);
+
+  const handleServiceToggle = (opt: string) => {
+    const next = selectedServices.includes(opt)
+      ? selectedServices.filter((s) => s !== opt)
+      : [...selectedServices, opt];
+    setFormData((prev) => ({ ...prev, service: joinServices(next) }));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -279,15 +302,18 @@ export default function EditProjectModal({
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Progress Status <span className="text-rose-500">*</span>
+                  Progress (%) <span className="text-rose-500">*</span>
                 </label>
                 <input
                   required
-                  type="text"
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="any"
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
-                  placeholder="e.g. 100% completed, In Progress"
+                  placeholder="e.g. 100"
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                 />
               </div>
@@ -314,15 +340,20 @@ export default function EditProjectModal({
                 <label className="block text-xs font-semibold text-slate-600 mb-1">
                   Services Provided <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  required
-                  type="text"
-                  name="service"
-                  value={formData.service}
-                  onChange={handleChange}
-                  placeholder="e.g. Architecture | Interior | Landscape"
-                  className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
-                />
+                <div className="flex flex-wrap gap-x-4 gap-y-2 px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg">
+                  {SERVICE_OPTIONS.map((opt) => (
+                    <label key={opt} className="flex items-center gap-1.5 text-xs text-slate-700 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        required={selectedServices.length === 0}
+                        checked={selectedServices.includes(opt)}
+                        onChange={() => handleServiceToggle(opt)}
+                        className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 transition"
+                      />
+                      {opt}
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
 
@@ -330,30 +361,34 @@ export default function EditProjectModal({
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Land Size <span className="text-rose-500">*</span>
+                  Land Size (sq ft) <span className="text-rose-500">*</span>
                 </label>
                 <input
                   required
-                  type="text"
+                  type="number"
+                  min={0}
+                  step="any"
                   name="size"
                   value={formData.size}
                   onChange={handleChange}
-                  placeholder="e.g. 20 acres"
+                  placeholder="e.g. 871200"
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                 />
               </div>
 
               <div>
                 <label className="block text-xs font-semibold text-slate-600 mb-1">
-                  Built-up Area <span className="text-rose-500">*</span>
+                  Built-up Area (sq ft) <span className="text-rose-500">*</span>
                 </label>
                 <input
                   required
-                  type="text"
+                  type="number"
+                  min={0}
+                  step="any"
                   name="buildup"
                   value={formData.buildup}
                   onChange={handleChange}
-                  placeholder="e.g. 12,00,000 sq.ft."
+                  placeholder="e.g. 1200000"
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                 />
               </div>
@@ -386,9 +421,12 @@ export default function EditProjectModal({
                   name="end_year"
                   value={formData.end_year}
                   onChange={handleChange}
-                  placeholder="e.g. 2023"
+                  placeholder="e.g. 2023 (2100 if ongoing)"
                   className="w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-lg text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
                 />
+                <p className="mt-1 text-[11px] text-slate-500">
+                  Write {CURRENT_PROJECT_END_YEAR} for a current (ongoing) project.
+                </p>
               </div>
             </div>
 
@@ -416,8 +454,6 @@ export default function EditProjectModal({
                 <div className="flex items-center gap-3">
                   {previewUrl && (
                     <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-slate-200 shrink-0 bg-slate-100">
-                      {/* Plain <img>: previews are local blob: URLs, which next/image can't optimize */}
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={previewUrl}
                         alt="Preview"
@@ -489,8 +525,6 @@ export default function EditProjectModal({
                         {/* Thumbnail preview */}
                         <div className="w-12 h-12 rounded-lg border border-slate-200 bg-white shrink-0 overflow-hidden flex items-center justify-center">
                           {imgItem.previewUrl || imgItem.image_location ? (
-                            // Plain <img>: previews are local blob: URLs, which next/image can't optimize
-                            // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={imgItem.previewUrl || imgItem.image_location}
                               alt="Gallery Preview"
@@ -586,6 +620,21 @@ export default function EditProjectModal({
                 <p className="text-[11px] text-slate-500">
                   Visible to users across the platform when enabled.
                 </p>
+              </div>
+            </label>
+
+            {/* Home Slider Toggle */}
+            <label className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl border border-slate-200/80 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                name="show_in_slider"
+                checked={formData.show_in_slider}
+                onChange={handleChange}
+                className="w-4 h-4 rounded text-blue-600 focus:ring-blue-500 border-slate-300 transition"
+              />
+              <div>
+                <span className="font-semibold text-slate-800 text-xs">Show in Home Slider</span>
+                <p className="text-[11px] text-slate-500">Display this project&apos;s cover image in the home page slider.</p>
               </div>
             </label>
           </div>

@@ -1,9 +1,8 @@
 'use client';
 
-import { useState, ChangeEvent } from 'react';
+import { useState, useEffect, ChangeEvent } from 'react';
 import { FiX, FiLoader, FiUploadCloud } from 'react-icons/fi';
 import { AkaMember, AkaMemberFormData } from '../types';
-import { API_BASE } from '@/lib/api';
 
 interface MemberModalProps {
   isOpen: boolean;
@@ -12,27 +11,8 @@ interface MemberModalProps {
   initialData?: AkaMember | null;
 }
 
-const CREATE_API_URL = `${API_BASE}/AkaMember`;
-const EDIT_API_URL = `${API_BASE}/EditMember`;
-
-function toFormData(member?: AkaMember | null): AkaMemberFormData {
-  if (!member) {
-    return { name: '', role: '', photo: '', degree: '', category: '', experience: '', description: '' };
-  }
-  return {
-    name: member.name || '',
-    role: member.role || '',
-    photo: member.photo || '',
-    degree: typeof member.degree === 'string'
-      ? member.degree.replace(/[{}\[\]\\"]/g, '').trim()
-      : Array.isArray(member.degree)
-        ? (member.degree as string[]).join(' | ')
-        : '',
-    category: member.category || '',
-    experience: member.experience || '',
-    description: member.description || '',
-  };
-}
+const CREATE_API_URL = 'https://www.lifepage.in/n/api/AkaMember';
+const EDIT_API_URL = 'https://www.lifepage.in/n/api/EditMember';
 
 export default function MemberModal({
   isOpen,
@@ -40,11 +20,50 @@ export default function MemberModal({
   onSuccess,
   initialData,
 }: MemberModalProps) {
-  // The page mounts this modal fresh (keyed by member) each time it opens, so state starts from initialData
-  const [formData, setFormData] = useState<AkaMemberFormData>(() => toFormData(initialData));
-  const [previewUrl, setPreviewUrl] = useState<string>(initialData?.photo || '');
+  const [formData, setFormData] = useState<AkaMemberFormData>({
+    name: '',
+    role: '',
+    photo: '',
+    degree: '',
+    category: '',
+    experience: '',
+    description: '',
+  });
+
+  const [previewUrl, setPreviewUrl] = useState<string>('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        role: initialData.role || '',
+        photo: initialData.photo || '',
+        degree: typeof initialData.degree === 'string' 
+          ? initialData.degree.replace(/[{}\[\]\\"]/g, '').trim() 
+          : Array.isArray(initialData.degree) 
+            ? (initialData.degree as string[]).join(' | ') 
+            : '',
+        category: initialData.category || '',
+        experience: initialData.experience || '',
+        description: initialData.description || '',
+      });
+      setPreviewUrl(initialData.photo || '');
+    } else {
+      setFormData({
+        name: '',
+        role: '',
+        photo: '',
+        degree: '',
+        category: '',
+        experience: '',
+        description: '',
+      });
+      setPreviewUrl('');
+    }
+    setErrorMsg(null);
+  }, [initialData, isOpen]);
 
   if (!isOpen) return null;
 
@@ -229,8 +248,6 @@ export default function MemberModal({
             <div className="flex items-center gap-4">
               <div className="relative h-14 w-14 shrink-0 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
                 {previewUrl ? (
-                  // Plain <img>: previews are local blob: URLs, which next/image can't optimize
-                  // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={previewUrl}
                     alt="Preview"
