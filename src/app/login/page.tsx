@@ -3,7 +3,7 @@
 import React, { useState, useRef, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   PhoneInput,
   defaultCountries,
@@ -17,7 +17,13 @@ import { GrClose } from "react-icons/gr";
 
 function LoginContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { login } = useAuth();
+
+  // Only allow same-site relative paths to avoid open redirects
+  const redirectParam = searchParams.get('redirect') || '';
+  const redirectTo =
+    redirectParam.startsWith('/') && !redirectParam.startsWith('//') ? redirectParam : '/';
   const [phone, setPhone] = useState<string>('');
   const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '']);
   const [showPin, setShowPin] = useState<boolean>(false);
@@ -136,7 +142,7 @@ function LoginContent() {
 
         // Delay navigation briefly so user sees the toast, or let it persist via RootLayout
         setTimeout(() => {
-          router.push('/');
+          router.push(redirectTo);
         }, 800);
       } else {
         const msg = data.message || 'Login failed! Please check your credentials.';

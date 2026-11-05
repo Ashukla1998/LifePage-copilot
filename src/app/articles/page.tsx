@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Navbar from '../../components/Navbar';
+import { useAuth } from '../context/AuthContext';
 
 // 🔹 TypeScript Interfaces
 interface QuestionDetail {
@@ -53,6 +55,7 @@ const orbitConfig: OrbitConfigItem[] = [
 function ArticlesContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { isLoggedIn, isAuthReady } = useAuth();
 
   // Parse URL query params
   const profileIdFromUrl = searchParams.get('profileid') || '';
@@ -953,6 +956,24 @@ function ArticlesContent() {
                   className="w-full h-[800px] border-none rounded-[20px] bg-white shadow-inner"
                   title="Self Assessment Certificate"
                 />
+
+                {/* Save progress prompt for logged-out users */}
+                {isAuthReady && !isLoggedIn && (
+                  <div className="mt-6 p-5 bg-white rounded-2xl border border-[#E46C09]/30 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div className="text-center sm:text-left">
+                      <h3 className="font-bold text-gray-900 text-lg">Do you want to save your progress?</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Log in to keep your self assessment and certificate.
+                      </p>
+                    </div>
+                    <Link
+                      href={`/login?redirect=${encodeURIComponent(certificateUrl)}`}
+                      className="shrink-0 py-3 px-6 bg-[#E46C09] text-white font-semibold rounded-xl transition hover:bg-[#c95d05] shadow-md text-sm"
+                    >
+                      Save My Progress
+                    </Link>
+                  </div>
+                )}
               </div>
             )}
 
