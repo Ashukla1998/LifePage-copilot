@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { API_BASE } from '@/lib/api';
 
 interface Question {
   questionid: string;
@@ -51,7 +52,7 @@ export default function CareerSessionsPage() {
     async function fetchSessions() {
       try {
         setLoading(true);
-        const res = await fetch("https://www.lifepage.in/n/api/tmp");
+        const res = await fetch(`${API_BASE}/tmp`);
         const json: ApiResponse = await res.json();
 
         if (json.success && Array.isArray(json.data)) {
@@ -74,7 +75,7 @@ export default function CareerSessionsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-12">
+    <div className="flex-1 bg-slate-950 text-slate-100 p-6 md:p-12">
       <header className="max-w-7xl mx-auto mb-10 text-center md:text-left">
         <h1 className="text-3xl font-extrabold tracking-tight sm:text-4xl text-white">
           Career Exploration Sessions

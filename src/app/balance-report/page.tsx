@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import Navbar from '../../components/Navbar';
 
 interface Transaction {
@@ -84,7 +85,7 @@ export default function BalanceReportPage() {
   }, [filterType, searchTerm]);
 
   return (
-    <div className="min-h-screen w-full bg-[#181818] text-gray-100 flex flex-col font-sans">
+    <div className="flex-1 w-full bg-[#181818] text-gray-100 flex flex-col font-sans">
       <Navbar />
 
       <main className="flex-1 w-full max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -110,7 +111,7 @@ export default function BalanceReportPage() {
 
           <div className="flex items-center gap-3">
             <button
-              onClick={() => alert('Exporting balance statement as CSV...')}
+              onClick={() => toast.info('CSV export is coming soon.')}
               className="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-gray-200 text-xs font-semibold rounded-lg border border-gray-600 transition flex items-center gap-1.5 shadow-sm"
             >
               <svg className="w-3.5 h-3.5 text-[#ffc000]" fill="none" stroke="currentColor" viewBox="0 0 24 24">

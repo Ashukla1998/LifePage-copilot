@@ -28,7 +28,6 @@ function LoginContent() {
   const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '']);
   const [showPin, setShowPin] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string>('');
 
   // Forgot PIN Modal State
   const [isForgotModalOpen, setIsForgotModalOpen] = useState<boolean>(false);
@@ -86,7 +85,6 @@ function LoginContent() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMessage('');
 
     const fullPin = pinDigits.join('');
 
@@ -105,14 +103,12 @@ function LoginContent() {
 
     if (!nationalNumber || nationalNumber.trim().length < 6) {
       const msg = 'Please enter a valid mobile number.';
-      setErrorMessage(msg);
       toast.error(msg);
       return;
     }
 
     if (fullPin.length !== 4) {
       const msg = 'Please enter all 4 digits of your PIN.';
-      setErrorMessage(msg);
       toast.error(msg);
       return;
     }
@@ -146,13 +142,11 @@ function LoginContent() {
         }, 800);
       } else {
         const msg = data.message || 'Login failed! Please check your credentials.';
-        setErrorMessage(msg);
         toast.error(msg);
       }
     } catch (err: unknown) {
       console.error('Login API error:', err);
       const msg = 'Error connecting to API. Please try again.';
-      setErrorMessage(msg);
       toast.error(msg);
     } finally {
       setIsLoading(false);
