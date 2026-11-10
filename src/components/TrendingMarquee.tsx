@@ -226,6 +226,7 @@ export default function TrendingMarquee({
                     onError={() =>
                       setBrokenThumbs((prev) => new Set(prev).add(thumbfile))
                     }
+                    unoptimized
                   />
                 ) : (
                   <Icon className="h-6 w-6 text-white drop-shadow" />

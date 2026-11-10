@@ -373,6 +373,7 @@ export default function ArticleView({ profileId, fieldOfStudy, topic, initialArt
                             sizes="(min-width: 1024px) 760px, 100vw"
                             className={`block w-full rounded-2xl object-contain shadow-md ${videoUrl ? "aspect-video max-h-[400px]" : "h-auto max-h-[500px]"}`}
                             alt={activeContent.subtitle || section?.title || "Step visual"}
+                            unoptimized
                           />
                         </div>
                       </div>

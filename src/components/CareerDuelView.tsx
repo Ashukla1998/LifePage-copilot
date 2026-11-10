@@ -168,6 +168,7 @@ export default function CareerDuelView({
             fill
             sizes="(min-width: 768px) 440px, 100vw"
             className="object-cover transition-transform duration-500 group-hover/col:scale-105"
+            unoptimized
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/25 to-transparent" />
 

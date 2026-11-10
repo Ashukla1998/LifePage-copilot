@@ -233,6 +233,7 @@ function AdvisorListContent() {
               fill
               sizes="(min-width: 1024px) 380px, (min-width: 640px) 50vw, 100vw"
               className="object-cover transition-transform duration-500 group-hover:scale-105"
+              unoptimized
             />
           )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -256,6 +257,7 @@ function AdvisorListContent() {
             }
             className="relative z-10 -mt-10 mb-3 h-20 w-20 rounded-full border-4 border-white bg-white object-cover shadow-md"
             alt={item.name}
+            unoptimized
           />
           <span className="mb-1.5 w-fit max-w-full truncate rounded-full bg-[#fdf6ec] px-2.5 py-0.5 text-xs font-semibold text-[#B87523]">
             {item.topic || ''}
