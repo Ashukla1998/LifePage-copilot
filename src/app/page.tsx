@@ -1,140 +1,109 @@
-"use client";
-
-import React, { useState, useRef, useEffect } from "react";
 import Image from "next/image";
-import { ChevronRight, Sparkles } from "lucide-react";
-import Navbar from "../components/Navbar";
-import HomeFormBox from "../components/HomeFormBox";
-import TrendingMarquee, { type TrendingCareer } from "../components/TrendingMarquee";
-import { getNavbarData } from "@/lib/navbarData";
+import Link from "next/link";
+import { ArrowRight, ChevronRight, Lightbulb, PenLine, Sparkles, type LucideIcon } from "lucide-react";
+import Navbar from "@/components/Navbar";
 import { jakarta } from "@/lib/fonts";
+// import Footer from "@/components/Footer";
+interface CommunityCard {
+  href: string;
+  icon: LucideIcon;
+  title: React.ReactNode;
+  description: string;
+  cta: string;
+  image: string;
+  alt: string;
+}
 
-// Fades the side images into the page background on every edge except the outer one
-const sideMask = (outer: "left" | "right") => {
-  const mask = `linear-gradient(to bottom, transparent 0%, black 12%, black 84%, transparent 100%), linear-gradient(to ${outer}, transparent 0%, black 22%)`;
-  return {
-    maskImage: mask,
-    WebkitMaskImage: mask,
-    maskComposite: "intersect",
-    WebkitMaskComposite: "source-in",
-  } as React.CSSProperties;
-};
+const cards: CommunityCard[] = [
+  {
+    href: "/share-your-experience",
+    icon: PenLine,
+    title: (
+      <>
+        Share Your <span className="text-[#C9822B]">Experience</span>! ✨
+      </>
+    ),
+    description: "Help others by sharing your career journey, insights, and triumphs.",
+    cta: "Share My Story",
+    image: "/share_your_experience.png",
+    alt: "Student writing in a notebook while watching the sunset over the mountains",
+  },
+  {
+    href: "/learning-from-others",
+    icon: Lightbulb,
+    title: <>Learning From Others 💡</>,
+    description: "Gain perspective by exploring stories, tips, and wisdom from professionals like you.",
+    cta: "Browse Stories",
+    image: "/learning_from_others.png",
+    alt: "Friends sharing career stories on a hilltop at sunset",
+  },
+];
 
 export default function Home() {
-  const [careerInput, setCareerInput] = useState("");
-  const inputRef = useRef<HTMLInputElement>(null);
-  const [count, setCount] = useState<string>("");
-  const [careers, setCareers] = useState<TrendingCareer[]>([]);
-
-  useEffect(() => {
-    let cancelled = false;
-    getNavbarData()
-      .then(({ count, topics }) => {
-        if (cancelled) return;
-        setCount(count);
-        // API can return the same topic more than once
-        const unique = new Map<string, TrendingCareer>();
-        topics.forEach((item) => {
-          const topic = item.topic.trim();
-          if (!unique.has(topic)) unique.set(topic, { topic, thumbfile: item.thumbfile });
-        });
-        setCareers(Array.from(unique.values()));
-      })
-      .catch((error) => console.error("Error fetching career data:", error));
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const handleCareerSelect = (selectedCareer: string) => {
-    setCareerInput(selectedCareer);
-    inputRef.current?.focus();
-  };
-
-  const handleCareerReset = () => {
-    setCareerInput("");
-  };
-
-  const formattedCount = count ? `${Number(count).toLocaleString()}+` : "2000+";
-  // Short names only, so the chips stay on a single row
-
   return (
-    <div className="min-h-dvh w-full bg-[linear-gradient(180deg,#f4f7fb_0%,#f8f9fb_55%,#fbf8f4_100%)] flex flex-col">
-      {/* Sticky Top Navbar */}
-      <Navbar careerCount={count} />
+    <div className="flex-1 w-full bg-[#fbf6ec] flex flex-col">
+      <Navbar />
 
       <main className={`flex-1 w-full ${jakarta.className}`}>
-        {/* Hero */}
-        <section className="relative w-full overflow-hidden">
-          {/* Side Images (desktop only) */}
-          <div
-            className="pointer-events-none absolute left-0 top-2 hidden lg:block lg:w-[33vw] max-w-[600px] -translate-x-[9%]"
-            style={sideMask("left")}
-          >
-            <Image
-              src="/leftSide.png"
-              alt="Student exploring education paths and job opportunities"
-              width={1315}
-              height={1197}
-              priority
-              className="h-auto w-full select-none"
-            />
-          </div>
-          <div
-            className="pointer-events-none absolute right-0 top-2 hidden lg:block lg:w-[33vw] max-w-[600px] translate-x-[7%]"
-            style={sideMask("right")}
-          >
-            <Image
-              src="/rightSide.png"
-              alt="Student discovering her interests and career path"
-              width={1315}
-              height={1197}
-              priority
-              className="h-auto w-full select-none"
-            />
+        <section className="mx-auto flex max-w-5xl flex-col items-center px-4 pt-10 pb-14 text-center sm:px-6 sm:pt-12">
+          {/* Pill */}
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-100 bg-[#fdf0dc] px-5 py-2 text-xs font-medium text-[#B87523] shadow-sm sm:text-sm">
+            <Sparkles className="h-4 w-4" />
+            Engage with our Community
+            <ChevronRight className="h-4 w-4" />
           </div>
 
-          <div className="relative z-10 mx-auto flex max-w-[720px] flex-col items-center px-4 pt-10 pb-8 text-center sm:pt-12 lg:max-w-[42vw] xl:max-w-[720px]">
-            {/* Pill */}
-            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-amber-100 bg-[#fdf6ec] px-5 py-2 text-xs font-medium text-[#B87523] shadow-sm sm:text-sm">
-              <Sparkles className="h-4 w-4" />
-              Explore {formattedCount} Career Pathways
-              <ChevronRight className="h-4 w-4" />
-            </div>
+          {/* Heading */}
+          <h1 className="text-3xl font-extrabold leading-[1.15] tracking-[-0.015em] text-[#111827] sm:text-5xl">
+            <span className="text-[#C9822B]">Share</span> and <span className="text-[#C9822B]">Learn</span> from
+            <br />
+            our Community
+          </h1>
+          <p className="mt-5 max-w-[520px] text-sm leading-relaxed text-gray-500 sm:text-lg">
+            Connect with professionals, find inspiration, and grow together through shared insights.
+          </p>
 
-            {/* Heading */}
-            <h1 className="text-3xl font-extrabold leading-[1.15] tracking-[-0.015em] text-[#111827] sm:text-5xl lg:text-[2.6rem] xl:text-[3.1rem]">
-              Find the <span className="text-[#C9822B]">Right Career</span>
-              <br />
-              <span className="sm:whitespace-nowrap">for a Brighter Tomorrow</span>
-            </h1>
-            <p className="mt-5 max-w-[620px] text-sm leading-relaxed text-gray-500 sm:text-lg">
-              Discover career options, skills, education paths and
-              opportunities with AI-powered insights to help you make
-              confident choices.
-            </p>
+          {/* Cards */}
+          <div className="mt-10 grid w-full gap-6 text-left md:grid-cols-2">
+            {cards.map(({ href, icon: Icon, title, description, cta, image, alt }, index) => (
+              <div
+                key={href}
+                className="flex flex-col overflow-hidden rounded-3xl bg-white shadow-[0_8px_30px_rgba(17,24,39,0.06)]"
+              >
+                <div className="flex flex-1 flex-col p-5 sm:p-6">
+                  <div className="flex items-center gap-4">
+                    <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-[#fdf0dc] text-[#C9822B] sm:h-[72px] sm:w-[72px]">
+                      <Icon className="h-7 w-7" />
+                    </span>
+                    <div>
+                      <h2 className="text-xl font-bold leading-tight text-gray-900 sm:text-2xl">{title}</h2>
+                      <p className="mt-1.5 text-sm leading-relaxed text-gray-600">{description}</p>
+                    </div>
+                  </div>
 
-            {/* Search Card */}
-            <div className="mt-8 w-full max-w-[700px]">
-              <HomeFormBox
-                ref={inputRef}
-                careerInput={careerInput}
-                setCareerInput={setCareerInput}
-              />
-            </div>
+                  <Link
+                    href={href}
+                    className="group mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-[#111827] px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:bg-[#1f2937]"
+                  >
+                    <Sparkles className="h-4 w-4 text-[#f5c26b]" />
+                    {cta}
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </Link>
+                </div>
 
+                <Link href={href} className="relative block aspect-[6/5] w-full overflow-hidden" tabIndex={-1}>
+                  <Image
+                    src={image}
+                    alt={alt}
+                    fill
+                    priority={index === 0}
+                    sizes="(min-width: 1024px) 490px, (min-width: 768px) 50vw, 100vw"
+                    className="object-cover transition-transform duration-500 hover:scale-105"
+                  />
+                </Link>
+              </div>
+            ))}
           </div>
-        </section>
-
-        {/* Trending Careers */}
-        <section className="w-full px-4 pb-8 sm:px-6 lg:px-8">
-          <TrendingMarquee
-            topic="Trending Careers"
-            items={careers}
-            onSelectCareer={handleCareerSelect}
-            onResetCareer={handleCareerReset}
-          />
         </section>
       </main>
     </div>

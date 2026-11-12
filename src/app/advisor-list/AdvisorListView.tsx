@@ -190,7 +190,7 @@ function AdvisorListContent() {
 
     // Without a search term there's nothing for the AI to write about
     if (!careerRaw) {
-      router.push('/');
+      router.push('/learning-from-others');
       return;
     }
 
@@ -199,7 +199,7 @@ function AdvisorListContent() {
 
   const reset = async () => {
     await sendEndTime();
-    router.push('/');
+    router.push('/learning-from-others');
   };
 
   const getExperienceYears = (from?: number, to?: number) => {

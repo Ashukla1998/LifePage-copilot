@@ -15,9 +15,9 @@ const EXPLORE_LINKS = [
 
 const ACCOUNT_LINKS = [{ href: "/login", label: "Login" }];
 
-// Homepage and AKA pages have their own layouts; the certificate is embedded in an iframe
+// Career search and AKA pages have their own layouts; the certificate is embedded in an iframe
 const isFooterHidden = (pathname: string) =>
-  pathname === "/" || pathname.startsWith("/aka") || pathname.startsWith("/certificate");
+  pathname === "/learning-from-others" || pathname.startsWith("/aka") || pathname.startsWith("/certificate");
 
 export default function Footer() {
   const pathname = usePathname();
