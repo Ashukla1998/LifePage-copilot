@@ -4,6 +4,7 @@ export const SERVICE_OPTIONS = [
   'Landscape',
   'Elevation',
   'Planning',
+  'Interior Design',
 ] as const;
 
 export const SERVICE_SEPARATOR = ' | ';
