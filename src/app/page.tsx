@@ -4,6 +4,7 @@ import { ArrowRight, ChevronRight, Lightbulb, PenLine, Sparkles, type LucideIcon
 import Navbar from "@/components/Navbar";
 import AdaptiveVideo from "@/components/AdaptiveVideo";
 import ComingSoonButton from "@/components/ComingSoonButton";
+import CareerVideoGrid from "@/components/CareerVideoGrid";
 import { jakarta } from "@/lib/fonts";
 import { dashManifestUrl, resolveVideoUrl } from "@/lib/articles";
 // import Footer from "@/components/Footer";
@@ -109,11 +110,15 @@ export default function Home() {
 
                 {videoSession ? (
                   <div className="relative aspect-video w-full overflow-hidden bg-black md:aspect-6/5">
-                    <AdaptiveVideo
-                      mp4Url={resolveVideoUrl(`${videoSession}.mp4`, videoSession)}
-                      dashUrl={dashManifestUrl(`${videoSession}.mp4`, videoSession)}
-                      poster={resolveVideoUrl(`${videoSession}1.JPG`, videoSession)}
-                      className="h-full w-full object-contain"
+                    <CareerVideoGrid
+                      fallback={
+                        <AdaptiveVideo
+                          mp4Url={resolveVideoUrl(`${videoSession}.mp4`, videoSession)}
+                          dashUrl={dashManifestUrl(`${videoSession}.mp4`, videoSession)}
+                          poster={resolveVideoUrl(`${videoSession}1.JPG`, videoSession)}
+                          className="h-full w-full object-contain"
+                        />
+                      }
                     />
                   </div>
                 ) : (
