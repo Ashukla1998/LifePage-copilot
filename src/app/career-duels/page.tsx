@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useTransitionRouter } from '@/components/PageTransition';
 import CareerDuelView, { type CareerData } from '@/components/CareerDuelView';
 import { API_BASE } from '@/lib/api';
 
@@ -12,7 +12,7 @@ interface UserEventBody {
 }
 
 export default function CareerDiscover() {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const [leftCareer, setLeftCareer] = useState<CareerData | null>(null);
   const [rightCareer, setRightCareer] = useState<CareerData | null>(null);
   const [selectedSide, setSelectedSide] = useState<'left' | 'right'>('left');

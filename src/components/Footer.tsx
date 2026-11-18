@@ -25,7 +25,7 @@ export default function Footer() {
 
   return (
     <footer className={`w-full shrink-0 bg-[#141414] text-gray-400 ${jakarta.className}`}>
-      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.6fr_1fr_1fr] lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1fr_auto] lg:px-8">
         {/* Brand */}
         <div>
           <Link href="/" className="inline-flex items-center gap-3">
@@ -49,7 +49,7 @@ export default function Footer() {
         </div>
 
         {/* Explore */}
-        <nav aria-label="Explore">
+        {/* <nav aria-label="Explore">
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-white">Explore</h3>
           <ul className="space-y-2.5 text-sm">
             {EXPLORE_LINKS.map(({ href, label }) => (
@@ -63,10 +63,10 @@ export default function Footer() {
               </li>
             ))}
           </ul>
-        </nav>
+        </nav> */}
 
         {/* Account */}
-        <nav aria-label="Account">
+        <nav aria-label="Account" className="md:text-right">
           <h3 className="mb-4 text-xs font-semibold uppercase tracking-wider text-white">Account</h3>
           <ul className="space-y-2.5 text-sm">
             {ACCOUNT_LINKS.map(({ href, label }) => (

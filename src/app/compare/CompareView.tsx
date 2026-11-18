@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useTransitionRouter } from '@/components/PageTransition';
 import { toast } from 'sonner';
 import { Search } from 'lucide-react';
 import CareerDuelView, { type CareerData } from '@/components/CareerDuelView';
@@ -14,7 +15,7 @@ interface UserEventBody {
 }
 
 function CompareCareersContent() {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const searchParams = useSearchParams();
   const term = searchParams.get('career') || '';
 

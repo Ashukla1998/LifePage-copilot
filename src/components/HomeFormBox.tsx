@@ -2,7 +2,7 @@
 
 import React, { useEffect, forwardRef } from "react";
 import { ArrowRight, Lightbulb, Search, Sparkles } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useTransitionRouter } from "@/components/PageTransition";
 import { API_BASE } from "@/lib/api";
 
 interface UserEventBody {
@@ -18,7 +18,7 @@ interface HomeFormBoxProps {
 
 const HomeFormBox = forwardRef<HTMLInputElement, HomeFormBoxProps>(
   ({ careerInput, setCareerInput }, ref) => {
-    const router = useRouter();
+    const router = useTransitionRouter();
 
     useEffect(() => {
       if (typeof window === "undefined") return;

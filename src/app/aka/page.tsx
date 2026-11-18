@@ -3,7 +3,7 @@
 import React, { useState, useRef, Suspense } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useTransitionRouter } from '@/components/PageTransition';
 import {
     PhoneInput,
     defaultCountries,
@@ -17,7 +17,7 @@ import { toast } from 'sonner';
 import { GrClose } from "react-icons/gr";
 
 function LoginContent() {
-    const router = useRouter();
+    const router = useTransitionRouter();
     const { login } = useAuth();
     const [phone, setPhone] = useState<string>('');
     const [pinDigits, setPinDigits] = useState<string[]>(['', '', '', '']);

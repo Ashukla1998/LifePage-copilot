@@ -81,7 +81,7 @@ export default function Navbar({ careerCount }: NavbarProps) {
             <span className="text-orange-500 font-bold">
               {formattedCount}
             </span>{" "}
-            Careers!
+            Career Pages!
           </h1>
         </div>
 

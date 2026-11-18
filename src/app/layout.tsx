@@ -4,6 +4,7 @@ import "./globals.css";
 import { AuthProvider } from './context/AuthContext';
 import { Toaster } from "sonner";
 import Footer from "../components/Footer";
+import { PageTransitionProvider } from "../components/PageTransition";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -52,8 +53,10 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <AuthProvider>
-          {children}
-          <Footer />
+          <PageTransitionProvider>
+            {children}
+            <Footer />
+          </PageTransitionProvider>
         </AuthProvider>
         <Toaster position="top-right" richColors />   
       </body>

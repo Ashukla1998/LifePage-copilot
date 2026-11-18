@@ -2,7 +2,8 @@
 
 import React, { useState, useEffect, useRef, Suspense } from 'react';
 import Image from 'next/image';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { useTransitionRouter } from '@/components/PageTransition';
 import {
   ArrowRight,
   Award,
@@ -40,7 +41,7 @@ interface UserEventBody {
 }
 
 function AdvisorListContent() {
-  const router = useRouter();
+  const router = useTransitionRouter();
   const searchParams = useSearchParams();
 
   const careerRaw = searchParams.get('career') || '';
