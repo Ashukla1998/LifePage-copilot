@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
   // A stray package-lock.json in the user folder makes Next guess the wrong project root
   turbopack: { root: projectRoot },
   outputFileTracingRoot: projectRoot,
+  experimental: {
+    agentUpgrade: "security",
+  },
   images: {
     remotePatterns: [
       {
