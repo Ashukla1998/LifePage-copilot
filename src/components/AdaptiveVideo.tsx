@@ -7,12 +7,13 @@ interface AdaptiveVideoProps {
   dashUrl: string;
   mp4Url: string;
   className?: string;
+  poster?: string;
 }
 
 // Streams the DASH manifest with dash.js so quality adapts to the viewer's connection.
 // Falls back to the progressive MP4 when Media Source isn't available, when the bucket
 // blocks the cross-origin manifest request (no CORS headers), or when dash.js errors.
-export default function AdaptiveVideo({ dashUrl, mp4Url, className }: AdaptiveVideoProps) {
+export default function AdaptiveVideo({ dashUrl, mp4Url, className, poster }: AdaptiveVideoProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -63,7 +64,7 @@ export default function AdaptiveVideo({ dashUrl, mp4Url, className }: AdaptiveVi
   }, [dashUrl, mp4Url]);
 
   return (
-    <video ref={videoRef} controls playsInline preload="metadata" className={className}>
+    <video ref={videoRef} controls playsInline preload="metadata" poster={poster} className={className}>
       Your browser can&apos;t play this video.
     </video>
   );
