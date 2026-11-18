@@ -11,6 +11,8 @@ export interface CareerVideo {
   speaker: string;
   designation: string;
   place: string;
+  /** Language the talk is in, e.g. "Hindi" */
+  lang: string;
   thumbUrl: string;
   videoUrl: string;
 }
@@ -25,11 +27,13 @@ interface SessionRow {
   name?: string | null;
   designation?: string | null;
   place?: string | null;
+  lang?: string | null;
   videofile?: string | null;
   thumbfile?: string | null;
 }
 
 const isFullUrl = (value: string) => /^https?:\/\//i.test(value);
+const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 
 async function postJson<T>(path: string, body: unknown): Promise<T | null> {
   try {
@@ -67,6 +71,7 @@ async function sessionDetails(sessionId: string, topic: string): Promise<CareerV
     speaker: row.name.trim(),
     designation: row.designation?.trim() ?? "",
     place: row.place?.trim() ?? "",
+    lang: capitalize(row.lang?.trim() ?? ""),
     thumbUrl: row.thumbfile ? resolveVideoUrl(row.thumbfile, sessionId) : "",
     videoUrl: resolveVideoUrl(row.videofile, sessionId),
   };

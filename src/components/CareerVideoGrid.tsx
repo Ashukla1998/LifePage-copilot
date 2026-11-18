@@ -13,7 +13,7 @@ interface CareerVideoGridProps {
 
 type State = { status: "loading" } | { status: "ready"; videos: CareerVideo[] } | { status: "error" };
 
-export default function CareerVideoGrid({ count = 9, fallback = null }: CareerVideoGridProps) {
+export default function CareerVideoGrid({ count = 4, fallback = null }: CareerVideoGridProps) {
   const [state, setState] = useState<State>({ status: "loading" });
 
   useEffect(() => {
@@ -33,7 +33,9 @@ export default function CareerVideoGrid({ count = 9, fallback = null }: CareerVi
   if (state.status === "error") return <>{fallback}</>;
 
   return (
-    <div className="grid h-full w-full grid-cols-3 grid-rows-3 gap-0.5 bg-black">
+    // A 16:9 grid of 2x2 ≈16:9 tiles, matching the session thumbnails (1700x956) and the
+    // neighbouring card's 16:9 image so both cards line up
+    <div className="grid aspect-video w-full grid-cols-2 grid-rows-2 gap-0.5 bg-black">
       {state.status === "loading"
         ? Array.from({ length: count }, (_, i) => (
             <div key={i} className="animate-pulse bg-gray-800" aria-hidden />
@@ -74,7 +76,7 @@ function CareerTile({ video }: { video: CareerVideo }) {
       onFocus={play}
       onBlur={stop}
       className="group relative block h-full w-full overflow-hidden bg-gray-900 outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-inset"
-      aria-label={`${video.speaker}, ${video.career}`}
+      aria-label={[video.speaker, video.designation, video.career, video.lang].filter(Boolean).join(", ")}
     >
       {video.thumbUrl && (
         <Image
@@ -83,8 +85,8 @@ function CareerTile({ video }: { video: CareerVideo }) {
           fill
           // Bucket images skip the optimizer, same as the rest of the app: it can't fetch them in production
           unoptimized
-          sizes="(min-width: 1024px) 165px, (min-width: 768px) 17vw, 33vw"
-          className="object-cover transition-transform duration-500 group-hover:scale-105"
+          sizes="(min-width: 1024px) 250px, (min-width: 768px) 25vw, 50vw"
+          className="object-contain transition-transform duration-500 group-hover:scale-105"
         />
       )}
 
@@ -98,13 +100,23 @@ function CareerTile({ video }: { video: CareerVideo }) {
         preload="none"
         onPlaying={() => setPlaying(true)}
         onWaiting={() => setPlaying(false)}
-        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}
       />
 
+      {/* Language badge: same visibility rules as the name overlay below */}
+      {video.lang && (
+        <span className="absolute top-2 right-2 rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow transition-opacity duration-300 sm:text-[11px] [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:opacity-100">
+          {video.lang}
+        </span>
+      )}
+
       {/* Name + career: always shown on touch screens, revealed on hover elsewhere */}
-      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/50 to-transparent px-2 pt-6 pb-1.5 text-left text-white transition-opacity duration-300 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:opacity-100">
-        <p className="truncate text-[11px] font-semibold leading-tight sm:text-xs">{video.speaker}</p>
-        <p className="truncate text-[10px] leading-tight text-orange-300 sm:text-[11px]">{video.career}</p>
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/50 to-transparent px-3 pt-8 pb-2 text-left text-white transition-opacity duration-300 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:opacity-100">
+        <p className="truncate text-xs font-semibold leading-tight sm:text-sm">{video.speaker}</p>
+        {video.designation && (
+          <p className="mt-0.5 truncate text-[11px] leading-tight text-white/80 sm:text-xs">{video.designation}</p>
+        )}
+        <p className="mt-0.5 truncate text-[11px] leading-tight text-orange-300 sm:text-xs">{video.career}</p>
       </div>
     </Link>
   );

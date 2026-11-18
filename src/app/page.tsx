@@ -28,9 +28,9 @@ const cards: CommunityCard[] = [
   {
     href: "/learning-from-others",
     icon: Lightbulb,
-    title: <>Learning From Career Pages of Real Professionals!</>,
+    title: <>Learn From Career Pages of Real Professionals!</>,
     description: "Gain perspective by exploring stories, tips, and wisdom from professionals like you.",
-    cta: "Explore",
+    cta: "Start Now",
     ctaColor: "bg-orange-500 hover:bg-orange-600",
     image: "/learning_from_others.png",
     alt: "Friends sharing career stories on a hilltop at sunset",
@@ -109,20 +109,22 @@ export default function Home() {
                 </div>
 
                 {videoSession ? (
-                  <div className="relative aspect-video w-full overflow-hidden bg-black md:aspect-6/5">
+                  <div className="relative w-full overflow-hidden bg-black">
                     <CareerVideoGrid
                       fallback={
-                        <AdaptiveVideo
-                          mp4Url={resolveVideoUrl(`${videoSession}.mp4`, videoSession)}
-                          dashUrl={dashManifestUrl(`${videoSession}.mp4`, videoSession)}
-                          poster={resolveVideoUrl(`${videoSession}1.JPG`, videoSession)}
-                          className="h-full w-full object-contain"
-                        />
+                        <div className="aspect-video w-full">
+                          <AdaptiveVideo
+                            mp4Url={resolveVideoUrl(`${videoSession}.mp4`, videoSession)}
+                            dashUrl={dashManifestUrl(`${videoSession}.mp4`, videoSession)}
+                            poster={resolveVideoUrl(`${videoSession}1.JPG`, videoSession)}
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
                       }
                     />
                   </div>
                 ) : (
-                  <Link href={href} className="relative block aspect-video w-full overflow-hidden md:aspect-6/5" tabIndex={-1}>
+                  <Link href={href} className="relative block aspect-video w-full overflow-hidden" tabIndex={-1}>
                     {media}
                   </Link>
                 )}

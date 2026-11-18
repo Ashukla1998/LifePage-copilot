@@ -77,7 +77,7 @@ export default function Navbar({ careerCount }: NavbarProps) {
         {/* Center Title */}
         <div className="absolute left-1/2 -translate-x-1/2 text-center pointer-events-none">
           <h1 className="text-center text-xs font-semibold sm:text-lg md:text-xl whitespace-nowrap">
-            World&apos;s largest Career Repository of{" "}
+            World&apos;s largest Repository of{" "}
             <span className="text-orange-500 font-bold">
               {formattedCount}
             </span>{" "}
