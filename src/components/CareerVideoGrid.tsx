@@ -47,6 +47,8 @@ function CareerTile({ video }: { video: CareerVideo }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   // Only attach the MP4 once the tile is hovered, so 9 videos don't download up front
   const [activated, setActivated] = useState(false);
+  // Keep the thumbnail visible until the video has a frame to show
+  const [playing, setPlaying] = useState(false);
 
   const play = () => {
     setActivated(true);
@@ -55,6 +57,7 @@ function CareerTile({ video }: { video: CareerVideo }) {
   };
 
   const stop = () => {
+    setPlaying(false);
     const el = videoRef.current;
     if (!el) return;
     el.pause();
@@ -78,6 +81,8 @@ function CareerTile({ video }: { video: CareerVideo }) {
           src={video.thumbUrl}
           alt=""
           fill
+          // Bucket images skip the optimizer, same as the rest of the app: it can't fetch them in production
+          unoptimized
           sizes="(min-width: 1024px) 165px, (min-width: 768px) 17vw, 33vw"
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
@@ -86,15 +91,18 @@ function CareerTile({ video }: { video: CareerVideo }) {
       <video
         ref={videoRef}
         src={activated ? video.videoUrl : undefined}
+        poster={video.thumbUrl || undefined}
         muted
         loop
         playsInline
         preload="none"
-        className="absolute inset-0 h-full w-full object-cover opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+        onPlaying={() => setPlaying(true)}
+        onWaiting={() => setPlaying(false)}
+        className={`absolute inset-0 h-full w-full object-cover transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}
       />
 
       {/* Name + career: always shown on touch screens, revealed on hover elsewhere */}
-      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-2 pt-6 pb-1.5 text-left text-white transition-opacity duration-300 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:opacity-100">
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/50 to-transparent px-2 pt-6 pb-1.5 text-left text-white transition-opacity duration-300 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:opacity-100">
         <p className="truncate text-[11px] font-semibold leading-tight sm:text-xs">{video.speaker}</p>
         <p className="truncate text-[10px] leading-tight text-orange-300 sm:text-[11px]">{video.career}</p>
       </div>
