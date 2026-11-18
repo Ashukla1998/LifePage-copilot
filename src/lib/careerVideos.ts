@@ -13,6 +13,8 @@ export interface CareerVideo {
   place: string;
   /** Language the talk is in, e.g. "Hindi" */
   lang: string;
+  /** Years in the career, from from_ts/to_ts (null when unknown) */
+  experienceYears: number | null;
   thumbUrl: string;
   videoUrl: string;
 }
@@ -28,12 +30,25 @@ interface SessionRow {
   designation?: string | null;
   place?: string | null;
   lang?: string | null;
+  from_ts?: string | number | null;
+  to_ts?: string | number | null;
   videofile?: string | null;
   thumbfile?: string | null;
 }
 
 const isFullUrl = (value: string) => /^https?:\/\//i.test(value);
-const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
+/**
+ * from_ts/to_ts are Unix seconds (as strings). Same rule as the advisor list: difference
+ * of calendar years, e.g. 2012 → 2020 = 8.
+ */
+function experienceYears(from?: string | number | null, to?: string | number | null): number | null {
+  const fromSec = Number(from);
+  const toSec = Number(to);
+  if (!fromSec || !toSec || toSec < fromSec) return null;
+  return new Date(toSec * 1000).getFullYear() - new Date(fromSec * 1000).getFullYear();
+}
+
+const capitalize =(value: string) => value.charAt(0).toUpperCase() + value.slice(1).toLowerCase();
 
 async function postJson<T>(path: string, body: unknown): Promise<T | null> {
   try {
@@ -72,6 +87,7 @@ async function sessionDetails(sessionId: string, topic: string): Promise<CareerV
     designation: row.designation?.trim() ?? "",
     place: row.place?.trim() ?? "",
     lang: capitalize(row.lang?.trim() ?? ""),
+    experienceYears: experienceYears(row.from_ts, row.to_ts),
     thumbUrl: row.thumbfile ? resolveVideoUrl(row.thumbfile, sessionId) : "",
     videoUrl: resolveVideoUrl(row.videofile, sessionId),
   };

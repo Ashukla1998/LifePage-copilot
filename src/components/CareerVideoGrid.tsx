@@ -66,6 +66,11 @@ function CareerTile({ video }: { video: CareerVideo }) {
     el.currentTime = 0;
   };
 
+  // 0 years (same calendar year) isn't worth showing
+  const experience = video.experienceYears
+    ? `${video.experienceYears} ${video.experienceYears === 1 ? "yr" : "yrs"} exp`
+    : "";
+
   const href = `/articles?${new URLSearchParams({ profileid: video.sessionId, topic: video.career })}`;
 
   return (
@@ -76,7 +81,7 @@ function CareerTile({ video }: { video: CareerVideo }) {
       onFocus={play}
       onBlur={stop}
       className="group relative block h-full w-full overflow-hidden bg-gray-900 outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-inset"
-      aria-label={[video.speaker, video.designation, video.career, video.lang].filter(Boolean).join(", ")}
+      aria-label={[video.speaker, video.designation, video.career, experience, video.lang].filter(Boolean).join(", ")}
     >
       {video.thumbUrl && (
         <Image
@@ -103,11 +108,20 @@ function CareerTile({ video }: { video: CareerVideo }) {
         className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}
       />
 
-      {/* Language badge: same visibility rules as the name overlay below */}
-      {video.lang && (
-        <span className="absolute top-2 right-2 rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow transition-opacity duration-300 sm:text-[11px] [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:opacity-100">
-          {video.lang}
-        </span>
+      {/* Experience + language badges: same visibility rules as the name overlay below */}
+      {(experience || video.lang) && (
+        <div className="absolute top-2 right-2 flex flex-wrap justify-end gap-1 transition-opacity duration-300 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:opacity-100">
+          {experience && (
+            <span className="rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-white shadow sm:text-[11px]">
+              {experience}
+            </span>
+          )}
+          {video.lang && (
+            <span className="rounded-full bg-orange-500 px-2 py-0.5 text-[10px] font-semibold text-white shadow sm:text-[11px]">
+              {video.lang}
+            </span>
+          )}
+        </div>
       )}
 
       {/* Name + career: always shown on touch screens, revealed on hover elsewhere */}
