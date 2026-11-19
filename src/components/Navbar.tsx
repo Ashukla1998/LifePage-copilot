@@ -59,9 +59,9 @@ export default function Navbar({ careerCount }: NavbarProps) {
 
   return (
     <nav className="sticky top-0 z-50 w-full bg-[url('/topbg.jpg')] bg-cover bg-center bg-no-repeat shadow-sm text-white shrink-0">
-      <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+      <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between gap-2 px-3 sm:gap-4 sm:px-6 lg:px-8">
         {/* Left Logo */}
-        <div className="flex items-center">
+        <div className="flex shrink-0 items-center">
           <Link href="/">
             <Image
               src="/icon.png"
@@ -69,14 +69,14 @@ export default function Navbar({ careerCount }: NavbarProps) {
               width={140}
               height={40}
               priority
-              className="h-10 w-auto cursor-pointer"
+              className="h-9 w-auto cursor-pointer sm:h-10"
             />
           </Link>
         </div>
 
-        {/* Center Title */}
-        <div className="absolute left-1/2 -translate-x-1/2 text-center pointer-events-none">
-          <h1 className="text-center text-xs font-semibold sm:text-lg md:text-xl whitespace-nowrap">
+        {/* Center Title: sits between logo and menu (never under them); wraps to 2 lines on phones */}
+        <div className="pointer-events-none min-w-0 flex-1 text-center">
+          <h1 className="text-center text-[11px] font-semibold leading-tight text-balance sm:text-lg sm:whitespace-nowrap md:text-xl">
             World&apos;s largest Repository of{" "}
             <span className="text-orange-500 font-bold">
               {formattedCount}
@@ -86,7 +86,7 @@ export default function Navbar({ careerCount }: NavbarProps) {
         </div>
 
         {/* Right Burger Menu & Dropdown */}
-        <div className="relative flex items-center" ref={dropdownRef}>
+        <div className="relative flex shrink-0 items-center" ref={dropdownRef}>
           <button
             type="button"
             onClick={() => setIsOpen((prev) => !prev)}

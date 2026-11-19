@@ -70,6 +70,10 @@ function CareerTile({ video }: { video: CareerVideo }) {
   const experience = video.experienceYears
     ? `${video.experienceYears} ${video.experienceYears === 1 ? "yr" : "yrs"} exp`
     : "";
+  // Shorter form for the phone strip, e.g. "13 yrs"
+  const shortExperience = video.experienceYears
+    ? `${video.experienceYears} ${video.experienceYears === 1 ? "yr" : "yrs"}`
+    : "";
 
   const href = `/articles?${new URLSearchParams({ profileid: video.sessionId, topic: video.career })}`;
 
@@ -108,9 +112,9 @@ function CareerTile({ video }: { video: CareerVideo }) {
         className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-300 ${playing ? "opacity-100" : "opacity-0"}`}
       />
 
-      {/* Experience + language badges: same visibility rules as the name overlay below */}
+      {/* Experience + language badges: hover devices only (on phones they'd cover the small tiles) */}
       {(experience || video.lang) && (
-        <div className="absolute top-2 right-2 flex flex-wrap justify-end gap-1 transition-opacity duration-300 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:opacity-100">
+        <div className="absolute top-2 right-2 hidden flex-wrap justify-end gap-1 transition-opacity duration-300 [@media(hover:hover)]:flex [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:opacity-100">
           {experience && (
             <span className="rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-semibold text-white shadow sm:text-[11px]">
               {experience}
@@ -124,13 +128,21 @@ function CareerTile({ video }: { video: CareerVideo }) {
         </div>
       )}
 
-      {/* Name + career: always shown on touch screens, revealed on hover elsewhere */}
-      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/85 via-black/50 to-transparent px-3 pt-8 pb-2 text-left text-white transition-opacity duration-300 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:opacity-100">
+      {/* Touch screens: always-on slim strip (name + career). Hover devices: full details on hover */}
+      <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 to-transparent px-2 pt-4 pb-1.5 text-left [@media(hover:hover)]:via-black/50 [@media(hover:hover)]:px-3 [@media(hover:hover)]:pt-8 [@media(hover:hover)]:pb-2 text-white transition-opacity duration-300 [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-hover:opacity-100 [@media(hover:hover)]:group-focus-visible:opacity-100">
         <p className="truncate text-xs font-semibold leading-tight sm:text-sm">{video.speaker}</p>
         {video.designation && (
-          <p className="mt-0.5 truncate text-[11px] leading-tight text-white/80 sm:text-xs">{video.designation}</p>
+          <p className="mt-0.5 hidden truncate text-[11px] leading-tight text-white/80 sm:text-xs [@media(hover:hover)]:block">
+            {video.designation}
+          </p>
         )}
         <p className="mt-0.5 truncate text-[11px] leading-tight text-orange-300 sm:text-xs">{video.career}</p>
+        {/* Touch screens only: compact experience + language line (hover devices use the badges) */}
+        {(shortExperience || video.lang) && (
+          <p className="mt-0.5 truncate text-[10px] leading-tight text-white/75 [@media(hover:hover)]:hidden">
+            {[shortExperience, video.lang].filter(Boolean).join(" · ")}
+          </p>
+        )}
       </div>
     </Link>
   );
