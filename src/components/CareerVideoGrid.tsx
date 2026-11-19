@@ -5,16 +5,37 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import type { CareerVideo } from "@/lib/careerVideos";
 
+// Square grid layouts for the small-screen picture grid (Tailwind needs literal class names)
+const MOBILE_GRID: Record<number, string> = {
+  9: "grid-cols-3 grid-rows-3",
+  16: "grid-cols-4 grid-rows-4",
+};
+
+// Small-screen tile count. Trying 16 (4x4); set back to 9 for the 3x3 grid.
+const MOBILE_COUNT = 16;
+
 interface CareerVideoGridProps {
-  count?: number;
+  /** Tiles on small screens: a square grid of pictures only (9 or 16) */
+  mobileCount?: 9 | 16;
+  /** Tiles from md up: a 2x2 grid with hover video + details */
+  desktopCount?: number;
   /** Shown if no videos could be loaded */
   fallback?: React.ReactNode;
 }
 
 type State = { status: "loading" } | { status: "ready"; videos: CareerVideo[] } | { status: "error" };
 
-export default function CareerVideoGrid({ count = 4, fallback = null }: CareerVideoGridProps) {
+const careerHref = (video: CareerVideo) =>
+  `/articles?${new URLSearchParams({ profileid: video.sessionId, topic: video.career })}`;
+
+export default function CareerVideoGrid({
+  mobileCount = MOBILE_COUNT,
+  desktopCount = 4,
+  fallback = null,
+}: CareerVideoGridProps) {
   const [state, setState] = useState<State>({ status: "loading" });
+  // One request covers both layouts
+  const count = Math.max(mobileCount, desktopCount);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -32,22 +53,56 @@ export default function CareerVideoGrid({ count = 4, fallback = null }: CareerVi
 
   if (state.status === "error") return <>{fallback}</>;
 
+  const skeletons = (n: number) =>
+    Array.from({ length: n }, (_, i) => <div key={i} className="animate-pulse bg-gray-800" aria-hidden />);
+
+  // Both grids are 16:9 overall with ≈16:9 tiles (matching the 1700x956 thumbnails), so the
+  // card lines up with its neighbour. CSS picks which grid shows; no JS screen detection.
   return (
-    // A 16:9 grid of 2x2 ≈16:9 tiles, matching the session thumbnails (1700x956) and the
-    // neighbouring card's 16:9 image so both cards line up
-    <div className="grid aspect-video w-full grid-cols-2 grid-rows-2 gap-0.5 bg-black">
-      {state.status === "loading"
-        ? Array.from({ length: count }, (_, i) => (
-            <div key={i} className="animate-pulse bg-gray-800" aria-hidden />
-          ))
-        : state.videos.map((video) => <CareerTile key={video.sessionId} video={video} />)}
-    </div>
+    <>
+      {/* Small screens: square grid of pictures only */}
+      <div className={`grid aspect-video w-full gap-0.5 bg-black md:hidden ${MOBILE_GRID[mobileCount]}`}>
+        {state.status === "loading"
+          ? skeletons(mobileCount)
+          : state.videos.slice(0, mobileCount).map((video) => <CareerThumb key={video.sessionId} video={video} />)}
+      </div>
+
+      {/* md and up: 2x2 with hover video + details */}
+      <div className="hidden aspect-video w-full grid-cols-2 grid-rows-2 gap-0.5 bg-black md:grid">
+        {state.status === "loading"
+          ? skeletons(desktopCount)
+          : state.videos.slice(0, desktopCount).map((video) => <CareerTile key={video.sessionId} video={video} />)}
+      </div>
+    </>
+  );
+}
+
+/** Small-screen tile: just the picture, linking to the career page */
+function CareerThumb({ video }: { video: CareerVideo }) {
+  return (
+    <Link
+      href={careerHref(video)}
+      className="relative block h-full w-full overflow-hidden bg-gray-900 outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-inset"
+      aria-label={`${video.speaker}, ${video.career}`}
+    >
+      {video.thumbUrl && (
+        <Image
+          src={video.thumbUrl}
+          alt=""
+          fill
+          // Bucket images skip the optimizer: it can't fetch them in production
+          unoptimized
+          sizes="33vw"
+          className="object-contain"
+        />
+      )}
+    </Link>
   );
 }
 
 function CareerTile({ video }: { video: CareerVideo }) {
   const videoRef = useRef<HTMLVideoElement>(null);
-  // Only attach the MP4 once the tile is hovered, so 9 videos don't download up front
+  // Only attach the MP4 once the tile is hovered, so videos don't download up front
   const [activated, setActivated] = useState(false);
   // Keep the thumbnail visible until the video has a frame to show
   const [playing, setPlaying] = useState(false);
@@ -75,11 +130,9 @@ function CareerTile({ video }: { video: CareerVideo }) {
     ? `${video.experienceYears} ${video.experienceYears === 1 ? "yr" : "yrs"}`
     : "";
 
-  const href = `/articles?${new URLSearchParams({ profileid: video.sessionId, topic: video.career })}`;
-
   return (
     <Link
-      href={href}
+      href={careerHref(video)}
       onMouseEnter={play}
       onMouseLeave={stop}
       onFocus={play}
